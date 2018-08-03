@@ -1,0 +1,44 @@
+QMainWindow {
+    background: white;
+}
+
+
+QPushButton{
+ background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0 #dff3f2, stop: 0.4 #d2eae9,
+                                stop: 0.5 #c2e0df, stop: 1.0 #b2d4d3);
+    border-style: outset;
+    border-width: 1px;
+	border-radius: 5px;
+	border-color: #7eb1c1;
+}
+
+QToolBar {
+ background: white;
+	border-color: #5f5f5f;		
+    spacing: 3px; /* spacing between items in the tool bar */
+}
+
+
+QLabel {
+	color: black;
+}
+
+QComboBox {
+	color: black;
+    background-color: white;
+    border-style: solid;
+    border-width: 1px;
+	border-color: #c8c8c8;
+	
+}
+
+QComboBox::::menu-indicator {
+	color: yellow;
+}
+
+QStatusBar {
+	color: black;
+}
+
+/*http://www.informit.com/articles/article.aspx?p=1405556*/

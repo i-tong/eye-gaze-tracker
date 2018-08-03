@@ -1,0 +1,54 @@
+QMainWindow {
+    background: #262626;
+}
+
+QDialog {
+    background: #262626;
+
+}
+QPushButton{
+    background-color: #6c6c6c;
+    border-style: outset;
+    border-width: 1px;
+	border-radius: 5px;
+	border-color: #303030;
+	color: white;
+}
+
+QPushButton:pressed {
+	background-color: #5c5c5c;
+	border-style: inset;
+}
+QToolBar {
+    background: #535353;
+    spacing: 3px; /* spacing between items in the tool bar */
+	border-style: outset;
+	border-bottom-color: #1c1c1c;
+}
+
+
+QToolBar::handle {
+   background: #535353;
+
+}
+
+QLabel {
+	color: white;
+}
+
+QComboBox {
+	color: white;
+    background-color: #6c6c6c;
+    border-style: outset;
+    border-width: 1px;
+	border-color: #303030;
+}
+QCheckBox {
+    color: white;
+}
+
+QStatusBar {
+	color: white;
+}
+
+/*http://www.informit.com/articles/article.aspx?p=1405556*/
