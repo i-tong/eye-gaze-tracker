@@ -63,6 +63,7 @@ You should now open the Qt project (src/gazeTrackGUI_release.pro) in Qt Creator.
 
 * Irene Tong
 * Maxwell Li
+* Dr. Tim Salcudean
 
 See also the list of [contributors](https://github.com/ubc-rcl/eye-gaze-tracker/graphs/contributors) who participated in this project.
 
