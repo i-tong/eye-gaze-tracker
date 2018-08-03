@@ -8,6 +8,10 @@ The software provided here open-source is the UI front-end component of the eye 
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
+### System Requirements
+
+Windows 7/8.1/10 or Ubuntu 14.04/16.04 (64-bit). One USB 3.0 port for the tracker and one USB port for power.
+
 ### Prerequisites
 
 Install Qt and Qt Creator. You can download Qt from https://www.qt.io/download.
