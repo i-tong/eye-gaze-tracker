@@ -8,10 +8,6 @@ The software provided here open-source is the UI front-end component of the eye 
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-### System Requirements
-
-Windows 7/8.1/10 or Ubuntu 14.04/16.04 (64-bit). One USB 3.0 port for the tracker and one USB port for power.
-
 ### Prerequisites
 
 Install Qt and Qt Creator. You can download Qt from https://www.qt.io/download.
@@ -63,9 +59,8 @@ You should now open the Qt project (src/gazeTrackGUI_release.pro) in Qt Creator.
 
 * Irene Tong
 * Maxwell Li
-* Dr. Tim Salcudean
 
-See also the list of [contributors](https://github.com/ubc-rcl/eye-gaze-tracker/graphs/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
 
 ## License
 

@@ -1,0 +1,22 @@
+<RCC>
+    <qresource prefix="/Icons">
+        <file>Resources/calib_icon.png</file>
+        <file>Resources/calib_icon_blue.png</file>
+        <file>Resources/calib_icon_light.png</file>
+        <file>Resources/play_icon.png</file>
+        <file>Resources/play_icon_blue.png</file>
+        <file>Resources/play_icon_light.png</file>
+        <file>Resources/stop_icon.png</file>
+        <file>Resources/stop_icon_light.png</file>
+        <file>Resources/log_icon_red.png</file>
+        <file>Resources/log_icon_grey.png</file>
+        <file>Resources/good_icon_black.png</file>
+        <file>Resources/good_icon_green.png</file>
+        <file>Resources/calib_icon_3D.png</file>
+        <file>Resources/glintexample.png</file>
+    </qresource>
+    <qresource prefix="/Styles">
+        <file>Resources/gazeStyle.qss</file>
+        <file>Resources/gazeStyle-light.qss</file>
+    </qresource>
+</RCC>
