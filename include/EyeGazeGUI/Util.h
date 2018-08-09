@@ -4,7 +4,7 @@ Util.h
 Author(s): Irene Tong, Maxwell Li
 Created on: August 1, 2018
 
-(c) Copyright 2017-2018 University of British Columbia
+(c) Copyright 2018 University of British Columbia
 
 --- begin license - do not edit ---
     This file is a part of CGaze UI.

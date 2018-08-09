@@ -4,7 +4,7 @@ CalibrationHead.h
 Author(s): Irene Tong, Maxwell Li
 Created on: August 1, 2018
 
-(c) Copyright 2017-2018 University of British Columbia
+(c) Copyright 2018 University of British Columbia
 
 --- begin license - do not edit ---
     This file is a part of CGaze UI.
@@ -14,16 +14,15 @@ Created on: August 1, 2018
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    CGaze UI is distributed in the hope that it will be useful,
+    Cgaze UI is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with CGaze UI.  If not, see <https://www.gnu.org/licenses/>.
+    along with Cgaze UI.  If not, see <https://www.gnu.org/licenses/>.
 --- end license ---
 */
-
 
 #ifndef CALIBRATIONHEAD_H
 #define CALIBRATIONHEAD_H

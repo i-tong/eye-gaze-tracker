@@ -4,7 +4,7 @@ DeckLinkDisplay.h
 Author(s): Irene Tong, Maxwell Li
 Created on: August 1, 2018
 
-(c) Copyright 2017-2018 University of British Columbia
+(c) Copyright 2018 University of British Columbia
 
 --- begin license - do not edit ---
     This file is a part of CGaze UI.
@@ -23,7 +23,6 @@ Created on: August 1, 2018
     along with Cgaze UI.  If not, see <https://www.gnu.org/licenses/>.
 --- end license ---
 */
-
 
 #ifndef DECKLINKDISPLAY_H
 #define DECKLINKDISPLAY_H
