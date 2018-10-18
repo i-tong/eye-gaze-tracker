@@ -404,7 +404,7 @@ void GazeTrackGUI::buttonClickedLog() {
             QString dateString = date.toString("'gazelog'_dd:MM:yyyy_hh:mm:ss.'txt'");
             dateString.replace(":","-");
             fn.append(dateString);
-            qDebug() << fn;
+
             logfile.open(fn.toStdString(),std::ios::out);
 
             logfile << "timestamp, timetick,framecount,";
@@ -547,7 +547,7 @@ void GazeTrackGUI::buttonClickedManualGlints()
  */
 void GazeTrackGUI::buttonClickedHead()
 {
-    qDebug() << tracker->isRunning() << tracker->isCalibrated();
+
 
     if (tracker->isRunning() && tracker->isCalibrated()) {
 
@@ -575,7 +575,7 @@ void GazeTrackGUI::buttonClickedHead()
  */
 void GazeTrackGUI::buttonClickedShowGaze() {
     if (mainToolbar->pushButton_ShowGaze->text() == "Show\nGaze") {
-        qDebug() << "show";
+
         if (tracker->isRunning() && tracker->isCalibrated()) {
             gazedisplay->show();
             mainToolbar->pushButton_ShowGaze->setText("Hide\nGaze");
@@ -586,7 +586,7 @@ void GazeTrackGUI::buttonClickedShowGaze() {
             errorBox.show();
         }
     } else {
-        qDebug() << "hide";
+
         gazedisplay->close();
         mainToolbar->pushButton_ShowGaze->setText("Show\nGaze");
     }
@@ -796,7 +796,6 @@ void GazeTrackGUI::refreshDisplaySource() {
 
         // Right
         // Get image
-        // qDebug() << tracker->getTestResR() << tracker->getTestResL();
         resRight = tracker->getFrame(origImageRight, rclgaze::RIGHT_EYE);
 
         // Overlay pupil and glint centers
@@ -911,11 +910,11 @@ void GazeTrackGUI::refreshDisplaySource() {
 
             lefterrnet = sqrt(lefterrx*lefterrx + lefterry*lefterry);
             righterrnet = sqrt(righterrx*righterrx + righterry*righterry);
-            //qDebug() << err_left[0] << err_left[1];
+
             QString calres = QString("Calibration Error");
             calres.append(QString("Left: %1 px (%3/%4)").arg(lefterrnet).arg(numValid_left).arg(total));
             calres.append(QString("Right: %1 px (%3/%4)").arg(righterrnet).arg(numValid_right).arg(total));
-            //qDebug() << calres;
+
 
         }
 
@@ -1223,7 +1222,6 @@ void GazeTrackGUI::logHEADCalibration(std::vector<std::vector<cv::Vec2f>> pg_pog
                                       std::vector<std::vector<cv::Vec2f>> pupil_pg_mapping_left,\
                                       std::vector<std::vector<cv::Vec2f>> pupil_pg_mapping_right, \
                                       int glintdist) {
-    qDebug() << "Logging HEAD Calibration!";
     if (_settings->value("record_calibration").toBool() == true) {
 
         QString dir = _settings->value("logfile_directory",QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
