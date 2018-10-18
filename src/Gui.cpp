@@ -8,8 +8,8 @@ Created on: August 1, 2018
 
 --- begin license - do not edit ---
 
-    This file is part of CGaze UI. 
-    
+    This file is part of CGaze UI.
+
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -27,17 +27,27 @@ Created on: August 1, 2018
 
 #include "Gui.h"
 
+/*!
+ *  \brief Constructor for GazeTrackGUI
+ */
 GazeTrackGUI::GazeTrackGUI(QWidget *parent)
     : QMainWindow(parent)
 {
+    this->setWindowIcon(QIcon(":/Icons/Resources/cgaze_icon.png"));
 
-    videoSourceLeftFilename = "/home/davinci3/Videos/Eye Videos/eyeVideo_test38.avi";//C:/Users/Irene/Videos/eyeVideo_test38.avi";
-    videoSourceRightFilename = "/home/davinci3/Videos/Eye Videos/eyeVideo_test38.avi";//C:/Users/Irene/Videos/eyeVideo_test38.avi";
-
+    videoSourceLeftFilename = "C:/Users/Irene/Videos/headtest_gazecenter.avi";//C:/Users/Irene/Videos/eyeVideo_test38.avi";
+    videoSourceRightFilename = "C:/Users/Irene/Videos/headtest_gazecenter.avi";//C:/Users/Irene/Videos/eyeVideo_test38.avi";
 
     tracker = new EyeTracker( QCoreApplication::applicationDirPath().toStdString());
     ui.setupUi(this);
-
+    ui.statusBar->addWidget(ui.statusLabelCamera,1);
+    ui.statusBar->addWidget(ui.statusLabelCalibration);
+    ui.statusBar->addPermanentWidget(ui.statusLabelFPS);
+    ui.statusLabelCalibration->setText("");
+    ui.statusLabelCalibration->setMinimumWidth(400);
+    ui.statusLabelCamera->setText("");
+    ui.statusLabelFPS->setText("Frame Rate: 0 fps");
+    ui.statusLabelFPS->setMinimumWidth(125);
     mainToolbar = new GazeToolbar();
     this->addToolBar(mainToolbar);
     // Start gaze tracker playback
@@ -46,6 +56,7 @@ GazeTrackGUI::GazeTrackGUI(QWidget *parent)
     im_timer->setSingleShot(false);
     im_timer->start();
     gazedisplay = new GazePositionDisplay(tracker);
+
     connect(gazedisplay,SIGNAL(rejected()),this,SLOT(buttonClickedShowGaze()));
 
 
@@ -56,9 +67,7 @@ GazeTrackGUI::GazeTrackGUI(QWidget *parent)
     connect(mainToolbar->pushButton_Calibrate,SIGNAL(released()),this,SLOT(buttonClickedStartCalibration()));
     connect(mainToolbar->pushButton_Log,SIGNAL(released()),this,SLOT(buttonClickedLog()));
 
-    //connect(mainToolbar->pushButton_Calibrate3D,SIGNAL(released()),this,SLOT(buttonClickedStartCalibration3D()));
     connect(im_timer,SIGNAL(timeout()),this,SLOT(refreshDisplaySource()));
-    connect(mainToolbar->pushButton_streamGazePosition,SIGNAL(released()),this,SLOT(buttonClickedStreamGazePosition()));
     connect(mainToolbar->pushButton_ManualGlints,SIGNAL(released()),this,SLOT(buttonClickedManualGlints()));
     connect(mainToolbar->pushButton_Head,SIGNAL(clicked()),this,SLOT(buttonClickedHead()));
     connect(mainToolbar->pushButton_ShowGaze,SIGNAL(released()),this,SLOT(buttonClickedShowGaze()));
@@ -66,11 +75,9 @@ GazeTrackGUI::GazeTrackGUI(QWidget *parent)
     // Menubar signals
     connect(ui.actionRight_Video_Source,SIGNAL(triggered()),this,SLOT(menuItemSelectedVideoSourceRight()));
     connect(ui.actionLeft_Video_Source,SIGNAL(triggered()),this,SLOT(menuItemSelectedVideoSourceLeft()));
-    connect(ui.actionLeft_Right_Video_Source,SIGNAL(triggered()),this,SLOT(menuItemSelectedVideoSourceLeft_Right()));
-    connect(ui.actionCapture_Settings, SIGNAL(triggered()),this,SLOT(menuItemSelectedCaptureSettings()));
-    connect(ui.actionStart_Recording, SIGNAL(triggered()),this,SLOT(menuItemSelectedStartRecording()));
-    connect(ui.actionStop_Recording, SIGNAL(triggered()),this,SLOT(menuItemSelectedStopRecording()));
 
+    connect(ui.actionCapture_Settings, SIGNAL(triggered()),this,SLOT(menuItemSelectedCaptureSettings()));
+    connect(ui.actionOPAPI_Settings, SIGNAL(triggered()),this,SLOT(menuItemSelectedOPAPISettings()));
     connect(mainToolbar->comboBox_calibEye, SIGNAL(currentTextChanged(QString)),this,SLOT(comboBoxChanged_calibEye(QString)));
     connect(mainToolbar->comboBox_calibNumber, SIGNAL(currentTextChanged(QString)),this,SLOT(comboBoxChanged_calibNumber(QString)));
 
@@ -93,34 +100,19 @@ GazeTrackGUI::GazeTrackGUI(QWidget *parent)
     // Init calibration
     dialog_calibration = new CalibrationDialog();
     connect(dialog_calibration, SIGNAL(CalibrationFinished()),this, SLOT(showCalibrationResults()));
+
     initCalibrationByGUI();
     dialog_head_calibration = new HeadCompensationDialog(tracker);
 
     // Open Gaze API
     _api_server = new OpenGazeAPIServer();
+    QString ip = _settings->value("opapi_ip","127.0.0.1").toString();
+    int port = _settings->value("opapi_port",4242).toInt();
+    _opapiSettingsDialog = new GuiOpenGazeSettingsDialog(ip,port);
     qRegisterMetaType< cv::Point2f >("cv::Point2f");
     qRegisterMetaType< cv::RotatedRect >("cv::RotatedRect");
 
-    tracker->registerCalibrationCallbacks(boost::bind(&OpenGazeAPIServer::OPAPI_SendCalStart,_api_server,_1,_2), \
-                                          boost::bind(&OpenGazeAPIServer::OPAPI_SendCalStop,_api_server,_1,_2), \
-                                          boost::bind(&OpenGazeAPIServer::OPAPI_SendCalResult,_api_server,_1,_2,_3,_4,_5,_6));
-    tracker->registerStreamCallback(boost::bind(&OpenGazeAPIServer::streamData,_api_server,_1));
 
-    tracker->registerLogCallback(boost::bind(&GazeTrackGUI::logData,this,_1));
-
-    //connect(tracker,SIGNAL(streamData(float,long long,cv::Point2f,cv::Point2f,bool,bool,bool,bool,cv::Point2f,bool,cv::RotatedRect,cv::RotatedRect)), \
-    //         _api_server,SLOT(OPAPI_SendRecord(float,long long,cv::Point2f,cv::Point2f,bool,bool,bool,bool,cv::Point2f,bool,cv::RotatedRect,cv::RotatedRect)));
-
-    // connect(tracker,SIGNAL(streamCalResult(int,std::vector<cv::Point2f>,std::vector<cv::Point2f>,std::vector<cv::Point2f>,std::vector<bool>,std::vector<bool>)), \
-    //         _api_server,SLOT(OPAPI_SendCalResult(int,std::vector<cv::Point2f>,std::vector<cv::Point2f>,std::vector<cv::Point2f>,std::vector<bool>,std::vector<bool>)));
-
-    // connect(tracker, SIGNAL(streamCalStart(int,cv::Point2f)), \
-    //         _api_server, SLOT(OPAPI_SendCalStart(int,cv::Point2f)));
-
-    // connect(tracker, SIGNAL(streamCalStop(int,cv::Point2f)), \
-    //         _api_server, SLOT(OPAPI_SendCalStop(int,cv::Point2f)));
-
-    connect(_api_server, SIGNAL(OPAPI_RequestValue(QString)),this, SLOT(getValue(QString)));
 
     connect(this,SIGNAL(returnValue(QString,float)), \
             _api_server,SLOT(OPAPI_ReplyValue(QString,float)));
@@ -139,10 +131,23 @@ GazeTrackGUI::GazeTrackGUI(QWidget *parent)
 
     connect(this, SIGNAL(returnNoValue(QString)),_api_server, SLOT(OPAPI_ReplyNoValue(QString)));
 
+    connect(_api_server, SIGNAL(OPAPI_RequestValue(QString)),this, SLOT(getValue(QString)));
+
     connect(_api_server, SIGNAL(OPAPI_SetValue(QString,float)),this, SLOT(setValue(QString,float)));
 
     connect(_api_server, SIGNAL(OPAPI_CalibrateAddpoint(float,float)), \
             this, SLOT(addCalibrationPoint(float,float)));
+
+    tracker->registerCalibrationCallbacks(boost::bind(&OpenGazeAPIServer::OPAPI_SendCalStart,_api_server,_1,_2), \
+                                          boost::bind(&OpenGazeAPIServer::OPAPI_SendCalStop,_api_server,_1,_2), \
+                                          boost::bind(&OpenGazeAPIServer::OPAPI_SendCalResult,_api_server,_1,_2,_3,_4,_5,_6));
+    tracker->registerStreamCallback(boost::bind(&OpenGazeAPIServer::streamData,_api_server,_1));
+
+    tracker->registerLogCallback(boost::bind(&GazeTrackGUI::logData,this,_1));
+
+    tracker->registerCalibLogCallback(boost::bind(&GazeTrackGUI::logCalibration,this,_1,_2,_3,_4,_5,_6));
+    tracker->registerHEADCalibLogCallback(boost::bind(&GazeTrackGUI::logHEADCalibration, this, _1,_2,_3,_4,_5));
+
 
 
 }
@@ -160,11 +165,18 @@ GazeTrackGUI::~GazeTrackGUI()
 
 // Event handling
 
+/*!
+ * \brief Slot called when the start/stop button is pressed.
+ *
+ * Initializes the eye gaze tracker with the selected video input source.
+ * If the tracker is already running, then it is stopped, and calibration
+ * and logging functions are stopped.
+ */
 void GazeTrackGUI::buttonClickedStartGazeTracker() {
 
     if ( tracker->isRunning() == false ) { // Start gaze tracker
         //QString rightSel = mainToolbar->comboBox_trackerInputRight->currentText();
-       // QString leftSel = mainToolbar->comboBox_trackerInputLeft->currentText();
+        // QString leftSel = mainToolbar->comboBox_trackerInputLeft->currentText();
         QString rightSel = mainToolbar->comboBox_trackerInputBoth->currentText();
         QString leftSel = mainToolbar->comboBox_trackerInputBoth->currentText();
 
@@ -235,6 +247,14 @@ void GazeTrackGUI::buttonClickedStartGazeTracker() {
     // Close wait dialog
 }
 
+/*!
+ * \brief Slot called when the calibrate button is pressed.
+ *
+ * Starts calibration. This slot only starts a calibration, if it is
+ * called when a calibration is already running then the current calibration
+ * will end and a new one is restarted.
+ *
+ */
 void GazeTrackGUI::buttonClickedStartCalibration() {
 
     if (tracker->isRunning()) {
@@ -257,31 +277,36 @@ void GazeTrackGUI::buttonClickedStartCalibration() {
 
 }
 
+/*!
+ * \brief Show or hide the calibration target display.
+ *
+ * This function shows or hides the calibration dialog, when
+ * showing the calibration dialog, the dialog is displayed on
+ * a specified monitor. The calibration dialog is initialized to be
+ * maximized and cover any toolbars.
+ *
+ * \param show Boolean whether to show (true) or hide (false) the calibration dialog.
+ */
 void GazeTrackGUI::showCalibrationWindow(bool show){
 
     if (show == true) {
 
-        dialog_calibration->setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
+        //dialog_calibration->setWindowFlags(Qt::FramelessWindowHint);
         dialog_calibration->show();
-        dialog_calibration->setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
         dialog_calibration->raise();
-        dialog_calibration->activateWindow();
+        //dialog_calibration->activateWindow();
 
         // Determine which window to display on
         QString monitorIdFullStr = mainToolbar->comboBox_calibMonitor->currentText();
 
-        if (monitorIdFullStr.compare("DeckLink") != 0 ) {
-            QDesktopWidget* deskWin = QApplication::desktop();
-            int monitorID = mainToolbar->comboBox_calibMonitor->currentIndex();
-            QRect monitorRect = deskWin->availableGeometry(monitorID);
-            dialog_calibration->move(QPoint(monitorRect.x(),monitorRect.y()));
-            dialog_calibration->resize(monitorRect.size());
-        } else {
-            QDesktopWidget* deskWin = QApplication::desktop();
-            QRect monitorRect = deskWin->availableGeometry(0);
-            dialog_calibration->move(QPoint(monitorRect.x(),monitorRect.y()));
-            dialog_calibration->resize(QSize(640,480));
-        }
+
+        QDesktopWidget* deskWin = QApplication::desktop();
+        int monitorID = mainToolbar->comboBox_calibMonitor->currentIndex();
+        QRect monitorRect = deskWin->screenGeometry(monitorID);
+        dialog_calibration->move(QPoint(monitorRect.x(),monitorRect.y()));
+        dialog_calibration->resize(monitorRect.size());
+
+
 
     } else if (show == false) {
         dialog_calibration->hide();
@@ -289,6 +314,52 @@ void GazeTrackGUI::showCalibrationWindow(bool show){
 
 }
 
+/*! \brief Initializes calibration settings using the user-specified settings from the UI.
+ *
+ * This function determines the number of calibration points, eye side(s) to calibrate, and
+ * the monitor on which to display the calibration.
+ *
+ */
+void GazeTrackGUI::initCalibrationByGUI() {
+    // Determine number of calibration points set
+    QString numCalib_str = mainToolbar->comboBox_calibNumber->currentText();
+    float move_rate = 0.7;
+    int numTargets = 5;
+    if (numCalib_str == "5 point") {
+        numTargets = 5;
+    } else if (numCalib_str == "9 point") {
+        numTargets = 9;
+        move_rate = 0.6;
+    } else if (numCalib_str == "16 point") {
+        numTargets = 16;
+        move_rate = 0.4;
+    }
+
+    //dialog_calibration = new CalibrationDialog();
+
+    // Select the eye to calibrate
+    rclgaze::eyeSide calibEyeSide = rclgaze::BOTH_EYES;
+    QString calibEye_str = mainToolbar->comboBox_calibEye->currentText();
+    if (calibEye_str == "Both Eyes") {
+        calibEyeSide = rclgaze::BOTH_EYES;
+    } else if (calibEye_str == "Right Eye") {
+        calibEyeSide = rclgaze::RIGHT_EYE;
+    } else if (calibEye_str == "Left Eye") {
+        calibEyeSide = rclgaze::LEFT_EYE;
+    }
+
+    QString monitorname = mainToolbar->comboBox_calibMonitor->currentText();
+
+    dialog_calibration->initCalibration(numTargets,10,20,0.1,0.02,move_rate,1000,1000,calibEyeSide,*tracker,false, 640,360);
+
+}
+
+/*!
+ * \brief Slot called when the log button is pressed. Starts and stops logging.
+ *
+ * This function starts and stops logging. To start logging, a new log file is created and populated
+ * with a data header.
+ */
 
 void GazeTrackGUI::buttonClickedLog() {
     if (tracker->isLogging() == true) {
@@ -306,17 +377,17 @@ void GazeTrackGUI::buttonClickedLog() {
                 _settings->value("pupil_position_right").toBool() || \
                 _settings->value("pupil_size_right").toBool() || \
                 _settings->value("glint_position_right").toBool() || \
-                _settings->value("record_video_right").toBool() || \
                 _settings->value("pog_position_right").toBool() || \
                 _settings->value("pg_left").toBool() || \
                 _settings->value("pupil_position_left").toBool() || \
                 _settings->value("pupil_size_left").toBool() || \
                 _settings->value("glint_position_left").toBool() || \
-                _settings->value("record_video_left").toBool()    ) {
+                _settings->value("record_video").toBool() || \
+                _settings->value("record_calibration").toBool() ) {
             log_data = true;
         }
 
-        bool log_video = _settings->value("record_video_left").toBool() || _settings->value("record_video_right").toBool();
+        bool log_video = _settings->value("record_video").toBool();
         if (!dir.endsWith("/")) {
             dir.append("/");
         }
@@ -336,7 +407,7 @@ void GazeTrackGUI::buttonClickedLog() {
             qDebug() << fn;
             logfile.open(fn.toStdString(),std::ios::out);
 
-            logfile << "timestamp, timetick,";
+            logfile << "timestamp, timetick,framecount,";
 
             if (_settings->value("pog_position_right").toBool()) {
                 logfile << "pog_right_x,pog_right_y,pog_valid_right,";
@@ -384,6 +455,9 @@ void GazeTrackGUI::buttonClickedLog() {
                 logfile << "glint1_left_x,glint1_left_y,";
                 logfile << "glint2_left_x,glint2_left_y,";
             }
+            if (_settings->value("record_calibration").toBool()) {
+                logfile << "calib_x,calib_y,calib_valid";
+            }
 
             logfile << "\n";
         }
@@ -393,6 +467,13 @@ void GazeTrackGUI::buttonClickedLog() {
 
 }
 
+/*!
+ * \brief Slot called when the glint button is pressed. Opens the ManualGlintDialog for setting a new glint template.
+ *
+ * This function opens a ManualGlintDialog. This dialog is used to set a new glint template. The image of the
+ * current eyes is displayed in the dialog and used for setting the template. This window may need to be re-started
+ * if there is currently no eye being detected.
+ */
 void GazeTrackGUI::buttonClickedManualGlints()
 {
     // TODO: Check if this works!
@@ -406,19 +487,43 @@ void GazeTrackGUI::buttonClickedManualGlints()
 
             // Get eye image
             cv::Mat right_eye, left_eye = cv::Mat::zeros(480,640,CV_8UC1);
-            tracker->getFrame(right_eye, rclgaze::RIGHT_EYE);
-            tracker->getFrame(left_eye, rclgaze::LEFT_EYE);
+            bool rightok = tracker->getFrame(right_eye, rclgaze::RIGHT_EYE);
+            bool leftok = tracker->getFrame(left_eye, rclgaze::LEFT_EYE);
 
             cv::Mat cmbImg;
             QImage dis;
             cv::Point2f sides = cv::Point2f(actual_size/2,actual_size/2);
-            cv::Mat leftROI = cv::Mat(left_eye,cv::Rect(pFound_L.center-sides,pFound_L.center+sides));
-            cv::Mat rightROI = cv::Mat(right_eye,cv::Rect(pFound_R.center-sides,pFound_R.center+sides));
+
+            cv::Point l0 = pFound_L.center-sides;
+            cv::Point r0 = pFound_R.center-sides;
+
+            cv::Point l1 = pFound_L.center+sides;
+            cv::Point r1 = pFound_R.center+sides;
+
+            if (l0.x < 0) {
+                l0.x = 0;
+                l1.x = sides.x;
+            }
+            if (l0.y < 0) {
+                l0.y = 0;
+                l1.y = sides.y;
+            }
+            if (r0.x < 0) {
+                r0.x = 0;
+                r1.x = sides.x;
+            }
+            if (r0.y < 0) {
+                r0.y = 0;
+                r1.y = sides.y;
+            }
+
+            cv::Mat leftROI = cv::Mat(left_eye,cv::Rect(l0,l1));
+            cv::Mat rightROI = cv::Mat(right_eye,cv::Rect(r0,r1));
             cv::hconcat(leftROI,rightROI,cmbImg);
             cvtMat2Qimage(cmbImg, dis);
             glintWindow->drawImage(dis);
         }
-        else{
+        else {
             glintWindow->close();
             mainToolbar->setStatus_pushButton_manualGlint(false);
             // Record results
@@ -433,6 +538,13 @@ void GazeTrackGUI::buttonClickedManualGlints()
     }
 }
 
+/*!
+ * \brief Slot called when the HEAD button is pressed. Opens a dialog for HEAD calibration.
+ *
+ * This function opens a GuiHeadCompensationDialog window for HEAD calibration. This calibration is
+ * used to compensate for head movements. The HEAD calibration can only be run once the tracker is
+ * running and calibrated .
+ */
 void GazeTrackGUI::buttonClickedHead()
 {
     qDebug() << tracker->isRunning() << tracker->isCalibrated();
@@ -442,8 +554,11 @@ void GazeTrackGUI::buttonClickedHead()
         QString monitorIdFullStr = mainToolbar->comboBox_calibMonitor->currentText();
         QDesktopWidget* deskWin = QApplication::desktop();
         int monitorID = mainToolbar->comboBox_calibMonitor->currentIndex();
+
+
         dialog_head_calibration->setDisplayMonitor(monitorID);
         dialog_head_calibration->show();
+
     } else{
         errorBox.setText("Please run and calibrate tracker before accomodating HEAD movement");
         errorBox.setWindowTitle("Error");
@@ -453,6 +568,11 @@ void GazeTrackGUI::buttonClickedHead()
 
 }
 
+/*!
+ * \brief Slot called when the Show Gaze button is pressed. Opens a window showing the current gaze position.
+ *
+ * This function opens or closes a window to show the current gaze position. This is useful for monitoring eye gaze tracking.
+ */
 void GazeTrackGUI::buttonClickedShowGaze() {
     if (mainToolbar->pushButton_ShowGaze->text() == "Show\nGaze") {
         qDebug() << "show";
@@ -472,59 +592,34 @@ void GazeTrackGUI::buttonClickedShowGaze() {
     }
 }
 
-void GazeTrackGUI::buttonClickedStreamGazePosition() {
-    // Start streaming gaze position through ROS node or socket
 
-    if (tracker->isRunning()){
-        if (mainToolbar->getStatus_pushButton_streamGazePosition()==false) {
-            //rospublisher = new RosPublisher;
-            // Make sure calibration is not taking place (can only stream after calibration is finished)
-            if (dialog_calibration->isCalibrationRunning() ) {
-                qDebug() << "Warning: Calibration is running, cannot start ROS node";
-                mainToolbar->setStatus_pushButton_streamGazePosition(false);
-
-            } else {
-
-                // Start streaming
-                //rospublisher->startGazePositionStream(tracker);
-            }
-        }
-        else if (mainToolbar->getStatus_pushButton_streamGazePosition() == true) {
-            // Stop streaming
-            //rospublisher->stopGazePositionStream();
-        }
-    }
-
-}
-
-//void GazeTrackGUI::comboBoxChangedTrackerType(QString str) {
-//    if (tracker->isRunning()) {
-//        tracker->stop();
-//    }
-//    delete tracker;
-
-//    if (mainToolbar->comboBox_trackerType->currentText() == "da Vinci" ) {
-//        tracker = new GazeTracker;
-//    } /*else if (mainToolbar->comboBox_trackerType->currentText() == "Head-mounted") {
-//        tracker = new hmGazeTracker;
-//    }*/
-//}
-
+/*!
+ * \brief Slot called when the Right Video Source menu item is selected.
+ *
+ * This slot allows the user to select a video file to be used for the right eye.
+ * If the "Use same left/right" menu item is checked, then the left eye video file
+ * is set to the same file.
+ */
 void GazeTrackGUI::menuItemSelectedVideoSourceRight() {
 
-    videoSourceRightFilename = QFileDialog::getOpenFileName(this,tr("Select right eye video file"),"",tr("Video Files (*.avi);;Image Files (*.png)"));
-    //mainToolbar->comboBox_trackerInputRight->setCurrentText("Video");
+    videoSourceRightFilename = QFileDialog::getOpenFileName(this,tr("Select right eye video file"),"",tr("Video Files (*.avi)"));
 
     if (ui.actionLeft_Right_Video_Source->isChecked()) {
         videoSourceLeftFilename = videoSourceRightFilename;
-        //mainToolbar->comboBox_trackerInputLeft->setCurrentText("Video");
     }
     mainToolbar->comboBox_trackerInputBoth->setCurrentText("Video");
 }
 
+/*!
+ * \brief Slot called when the Left Video Source menu item is selected.
+ *
+ * This slot allows the user to select a video file to be used for the left eye.
+ * If the "Same left/right video" menu item is checked, then the right eye video file
+ * is set to the same file.
+ */
 void GazeTrackGUI::menuItemSelectedVideoSourceLeft() {
 
-    videoSourceLeftFilename = QFileDialog::getOpenFileName(this,tr("Select left eye video file"),"",tr("Video Files (*.avi);;Image Files (*.png)"));
+    videoSourceLeftFilename = QFileDialog::getOpenFileName(this,tr("Select left eye video file"),"",tr("Video Files (*.avi)"));
     //mainToolbar->comboBox_trackerInputLeft->setCurrentText("Video");
 
     if (ui.actionLeft_Right_Video_Source->isChecked()) {
@@ -534,44 +629,43 @@ void GazeTrackGUI::menuItemSelectedVideoSourceLeft() {
     mainToolbar->comboBox_trackerInputBoth->setCurrentText("Video");
 }
 
-void GazeTrackGUI::menuItemSelectedVideoSourceLeft_Right() {
+/*!
+ * \brief GazeTrackGUI::menuItemSelectedOPAPISettings
+ *
+ * This slot opens a dialog which allows the user to set the socket ip address and port
+ * for the Open Gaze API server.
+ *
+ */
+void GazeTrackGUI::menuItemSelectedOPAPISettings() {
 
-   if (ui.actionLeft_Right_Video_Source->isChecked()) {
-       videoSourceRightFilename = QFileDialog::getOpenFileName(this,tr("Select both eyes video file"),"",tr("Video Files (*.avi);;Image Files (*.png)"));
+    int res = _opapiSettingsDialog->exec();
 
-       videoSourceLeftFilename = videoSourceRightFilename;
-        //mainToolbar->comboBox_trackerInputRight->setCurrentText("Video");
-        //mainToolbar->comboBox_trackerInputLeft->setCurrentText("Video");
-        mainToolbar->comboBox_trackerInputBoth->setCurrentText("Video");
+    if(res == QDialog::Accepted) {
+        QString ip = _opapiSettingsDialog->getIP();
+        int port = _opapiSettingsDialog->getPort();
+        _settings->setValue("opapi_ip",ip);
+        _settings->setValue("opapi_port",port);
+        _api_server->setHostAddress(ip);
+        _api_server->setPort(port);
     }
-
 }
 
-void GazeTrackGUI::menuItemSelectedStartRecording() {
-    if (tracker->isRunning()){
-        QString dir;
-        // Load recording settings
-        //tracker->startRecording();
-    }
-    else {
-        errorBox.setText("Please run tracker");
-        errorBox.setWindowTitle("Error");
-        errorBox.setIcon(QMessageBox::Warning);
-        errorBox.show();
-    }
-
-}
-
-void GazeTrackGUI::menuItemSelectedStopRecording() {
-    tracker->stopRecording();
-}
-
+/*!
+ * \brief Callback function for logging data.
+ *
+ * This function is called by the EyeTracker class in order to log data. The new data is written
+ * in a CSV format to the log file. The "Capture Settings" dialog can be used to set what data will be written.
+ * \param data New data to be logged.
+ */
 void GazeTrackGUI::logData(rclgaze::log_data data) {
-    logfile << data.timestamp << data.timetick;
-    //qDebug() << data.framecount;
+
+    logfile << std::setprecision(32) << data.timestamp << "," << data.timetick << "," << data.framecount << ",";
+
     if (_settings->value("pog_position_right").toBool()) {
         logfile << data.pog_right_x << "," << data.pog_right_y << "," << data.pog_right_valid << ",";
     }
+
+
     if (_settings->value("pg_right").toBool()) {
         logfile << data.pg0_right_x << "," << data.pg0_right_y << ",";
         logfile << data.pg1_right_x << "," << data.pg1_right_y << ",";
@@ -615,15 +709,27 @@ void GazeTrackGUI::logData(rclgaze::log_data data) {
         logfile << data.glint1_left_x << "," << data.glint1_left_y << ",";
         logfile << data.glint2_left_x << "," << data.glint2_left_y << ",";
     }
-
+    if (_settings->value("record_calibration").toBool()) {
+        logfile << data.calibration_x << "," << data.calibration_y << "," << data.calibration_valid << ",";
+    }
     logfile << "\n";
 }
 
+/*!
+ * \brief Slot called when Capture Settings menu item is selected.
+ *
+ * This slot opens a dialog for selecting the items to be logged.
+ */
 void GazeTrackGUI::menuItemSelectedCaptureSettings() {
     Dialog_DataLogSettings d(_settings);
     d.exec();
 }
 
+/*!
+ * \brief Slot called when the combobox for calibration eye side is changed (GuiToolbar::comboBox_calibEye)
+ *
+ * This slot updates the current eye side to be calibrated.
+ */
 void GazeTrackGUI::comboBoxChanged_calibEye(QString str) {
 
     rclgaze::eyeSide calibEyeSide;
@@ -638,6 +744,11 @@ void GazeTrackGUI::comboBoxChanged_calibEye(QString str) {
 
 }
 
+/*!
+ * \brief Slot called when the combobox for number of calibration targets is changed (GuiToolbar::comboBox_calibNumber)
+ *
+ * This slot updates the number of claibration targets to be calibrated.
+ */
 void GazeTrackGUI::comboBoxChanged_calibNumber(QString str) {
 
     QString numCalib_str = str;
@@ -656,6 +767,12 @@ void GazeTrackGUI::comboBoxChanged_calibNumber(QString str) {
 
 }
 
+/*!
+ * \brief Slot called to refresh UI and draw new frames, called upon im_timer timeout
+ *
+ * This slot runs every 10ms according to im_timer. It draws the eye video frames, and overlays the detected
+ * pupil and glint contours. The slot will also calculate the current calibration results and display to the UI.
+ */
 void GazeTrackGUI::refreshDisplaySource() {
     cv::Mat dispImage_cv;
     cv::Mat combImage;
@@ -685,9 +802,10 @@ void GazeTrackGUI::refreshDisplaySource() {
         // Overlay pupil and glint centers
         pupilFound = tracker->getPupil(pFound_R, rclgaze::RIGHT_EYE);
         glintFound = tracker->getGlints(gList, rclgaze::RIGHT_EYE);
+
         if (pupilFound) {
             cv::ellipse(origImageRight,pFound_R,cv::Scalar(0,255,0),2,8);
-            cv::circle(origImageRight,pFound_R.center,2,cv::Scalar(0,255,0),-1);
+            cv::circle(origImageRight,pFound_R.center,1.5,cv::Scalar(0,255,0),-1);
         }
         if (glintFound && !std::isnan(gList.at(0).x)) {
             cv::circle(origImageRight,gList.at(0),3,cv::Scalar(255,255,0),1,8);
@@ -710,7 +828,7 @@ void GazeTrackGUI::refreshDisplaySource() {
         glintFound = tracker->getGlints(gList, rclgaze::LEFT_EYE);
         if (pupilFound){
             cv::ellipse(origImageLeft,pFound_L,cv::Scalar(0,255,0),2,8);
-            cv::circle(origImageLeft,pFound_L.center,2,cv::Scalar(0,255,0),-1);
+            cv::circle(origImageLeft,pFound_L.center,1.5,cv::Scalar(0,255,0),-1);
         }
         // plot glints
         if (glintFound && !std::isnan(gList.at(0).x)) {
@@ -810,10 +928,10 @@ void GazeTrackGUI::refreshDisplaySource() {
     }
 }
 
-void GazeTrackGUI::gazeParamChanged(QHash<QString, float> paramHash) {
-    //tracker->updateGazeParam(paramHash);
-}
-
+/*!
+ * \brief Slot called when UI window is closed.
+ * \param event Close event
+ */
 void GazeTrackGUI::closeEvent(QCloseEvent *event) {
     if (dialog_calibration->isVisible()) {
         qDebug() << "Close dialog";
@@ -827,7 +945,15 @@ void GazeTrackGUI::closeEvent(QCloseEvent *event) {
 }
 
 // Open Gaze API
-
+/*!
+ * \brief Slot called when Open Gaze API Server requests a value.
+ *
+ * This slot is connected to the OpenGazeAPIServer::OPAPI_RequestValue signal.
+ * It is used to retrieve the value for a specified data topic which will then be
+ * broadcasted with the Open Gaze API.
+ *
+ * \param ID ID of data topic to be returned.
+ */
 void GazeTrackGUI::getValue(QString ID) {
     qDebug() << "GET" << ID;
     if (ID.compare("CALIBRATE_START") == 0) {
@@ -880,7 +1006,7 @@ void GazeTrackGUI::getValue(QString ID) {
         emit streamCalibrationTargetPositions(ID, targetPos);
     } else if (ID.compare("TRACKER_DISPLAY") == 0) {
     } else if (ID.compare("TIME_TICK_FREQUENCY") == 0) {
-         emit returnValue(ID,CLOCKS_PER_SEC);
+        emit returnValue(ID,CLOCKS_PER_SEC);
     } else if (ID.compare("SCREEN_SIZE") == 0) {
         emit returnScreenSize(ID,0,0,640,480);
     } else if (ID.compare("CAMERA_SIZE") == 0) {
@@ -900,6 +1026,15 @@ void GazeTrackGUI::getValue(QString ID) {
     }
 }
 
+/*!
+ * \brief Slot called when Open Gaze API Server sets a value.
+ *
+ * This slot is connected to the OpenGazeAPIServer::OPAPI_SetValue signal.
+ * It is currently only used to set calibration parameters from Open Gaze API SET commands.
+ *
+ * \param ID Data topic
+ * \param value Value to set data topic
+ */
 void GazeTrackGUI::setValue(QString ID, float value) {
 
     bool fail = false;
@@ -955,6 +1090,15 @@ void GazeTrackGUI::setValue(QString ID, float value) {
     }
 }
 
+/*!
+ * \brief Slot called to add a calibration point.
+ *
+ * This slot is connected to the OpenGazeAPIServer::OPAPI_CalibrateAddpoint signal.
+ * It is used to add a target position to the calibration sequence.
+ *
+ * \param X Calibration target X position (% of screen width, 0-100)
+ * \param Y Calibration target Y position (% of screen height, 0-100)
+ */
 void GazeTrackGUI::addCalibrationPoint(float X, float Y) {
     if (this->dialog_calibration->isCalibrationRunning() == false) {
         dialog_calibration->addCalibrationPoint(X,Y);
@@ -964,45 +1108,12 @@ void GazeTrackGUI::addCalibrationPoint(float X, float Y) {
     }
 }
 
-void GazeTrackGUI::initCalibrationByGUI() {
-    // Determine number of calibration points set
-    QString numCalib_str = mainToolbar->comboBox_calibNumber->currentText();
-    float move_rate = 0.7;
-    int numTargets = 5;
-    if (numCalib_str == "5 point") {
-        numTargets = 5;
-    } else if (numCalib_str == "9 point") {
-        numTargets = 9;
-        move_rate = 0.6;
-    } else if (numCalib_str == "16 point") {
-        numTargets = 16;
-        move_rate = 0.4;
-    }
 
-    //dialog_calibration = new CalibrationDialog();
-
-    // Select the eye to calibrate
-    rclgaze::eyeSide calibEyeSide = rclgaze::BOTH_EYES;
-    QString calibEye_str = mainToolbar->comboBox_calibEye->currentText();
-    if (calibEye_str == "Both Eyes") {
-        calibEyeSide = rclgaze::BOTH_EYES;
-    } else if (calibEye_str == "Right Eye") {
-        calibEyeSide = rclgaze::RIGHT_EYE;
-    } else if (calibEye_str == "Left Eye") {
-        calibEyeSide = rclgaze::LEFT_EYE;
-    }
-
-    QString monitorname = mainToolbar->comboBox_calibMonitor->currentText();
-    bool useDecklink = (monitorname.compare("DeckLink") == 0);
-    if (useDecklink) {
-        // start decklink connection
-
-    }
-    dialog_calibration->initCalibration(numTargets,10,20,0.1,0.02,move_rate,1500,1000,calibEyeSide,*tracker,useDecklink, 640, 480);
-
-}
-
+/*!
+ * \brief Show the calibration results on the status bar.
+ */
 void GazeTrackGUI::showCalibrationResults() {
+
     // Display calibration results on status bar
     cv::Vec2f righterr = tracker->getCalibrationError(rclgaze::RIGHT_EYE);
     cv::Vec2f lefterr = tracker->getCalibrationError(rclgaze::LEFT_EYE);
@@ -1012,10 +1123,156 @@ void GazeTrackGUI::showCalibrationResults() {
 
     QString res = QString("Calibration Error: Left: x: %1%, y: %2%  Right: x: %3%, y: %4% ").arg(lefterr[0],1,'f',1).arg(lefterr[1],1,'f',1).arg(righterr[0],1,'f',1).arg(righterr[1],1,'f',1);
     QString monitorname = mainToolbar->comboBox_calibMonitor->currentText();
-    bool useDecklink = (monitorname.compare("DeckLink") == 0);
-    //if (useDecklink) {
 
-    //}
     ui.statusLabelCalibration->setText(res);
 }
 
+/*!
+ * \brief Callback function for logging calibration.
+ *
+ * This function is called by the EyeTracker after calibration is finished. If the calibration checkbox
+ * is selected in Capture Settings, then a log file will be created with the calibration information.
+ *
+ * \param lefttransmat Left transformation matrix
+ * \param righttransmat Right transformation matrix
+ * \param main_glint_left ID of the main glint for the left eye
+ * \param main_glint_right ID of the main glint for the right eye
+ * \param sec_glint_left ID of the secondary glint for the left eye
+ * \param sec_glint_right ID of the secondary glint for the right eye
+ */
+void GazeTrackGUI::logCalibration(std::vector<boost::numeric::ublas::matrix<double>> lefttransmat, \
+                                  std::vector<boost::numeric::ublas::matrix<double>> righttransmat, \
+                                  int main_glint_left, int main_glint_right, \
+                                  int sec_glint_left, int sec_glint_right) {
+
+    if (_settings->value("record_calibration").toBool() == true) {
+
+        QString dir = _settings->value("logfile_directory",QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+
+        QString fn = dir;
+        QDateTime date = QDateTime::currentDateTime();
+        QString dateString = date.toString("'/caliblog'_dd:MM:yyyy_hh:mm:ss.'txt'");
+        dateString.replace(":","-");
+        fn.append(dateString);
+
+        std::ofstream log;
+        log.open(fn.toStdString(),std::ios::out);
+
+        log << "Main glint left:" << main_glint_left << "\n";
+        log << "Sec glint left:" << sec_glint_left << "\n";
+        log << "Main glint right:" << main_glint_right << "\n";
+        log << "Sec glint right:" << sec_glint_right << "\n";
+
+        log << "left:\n";
+        for (int i = 0 ; i < lefttransmat.size() ; i++ ) {
+            if ( lefttransmat.at(i).size1()==0 || lefttransmat.at(i).size2() == 0) {
+                continue;
+            }
+            log << "Glint: " << i << "\n";
+            log << lefttransmat.at(i).at_element(0,0)<< ", ";
+            log << lefttransmat.at(i).at_element(1, 0) << ", ";
+            log << lefttransmat.at(i).at_element(2, 0) << ", ";
+            log << lefttransmat.at(i).at_element(3, 0) << ", ";
+            log << lefttransmat.at(i).at_element(4, 0) << ", ";
+            log << lefttransmat.at(i).at_element(5, 0) << ", \n";
+            log << lefttransmat.at(i).at_element(0, 1) << ", ";
+            log << lefttransmat.at(i).at_element(1, 1) << ", ";
+            log << lefttransmat.at(i).at_element(2, 1) << ", ";
+            log << lefttransmat.at(i).at_element(3, 1) << ", ";
+            log << lefttransmat.at(i).at_element(4, 1) << ", ";
+            log << lefttransmat.at(i).at_element(5, 1) << ", \n";
+        }
+
+        log << "right:\n";
+        for (int i = 0 ; i < righttransmat.size() ; i++ ) {
+            if ( righttransmat.at(i).size1()==0 || righttransmat.at(i).size2() == 0) {
+                continue;
+            }
+            log << "Glint: " << i << "\n";
+            log << righttransmat.at(i).at_element(0,0)<< ", ";
+            log << righttransmat.at(i).at_element(1, 0) << ", ";
+            log << righttransmat.at(i).at_element(2, 0) << ", ";
+            log << righttransmat.at(i).at_element(3, 0) << ", ";
+            log << righttransmat.at(i).at_element(4, 0) << ", ";
+            log << righttransmat.at(i).at_element(5, 0) << ", \n";
+            log << righttransmat.at(i).at_element(0, 1) << ", ";
+            log << righttransmat.at(i).at_element(1, 1) << ", ";
+            log << righttransmat.at(i).at_element(2, 1) << ", ";
+            log << righttransmat.at(i).at_element(3, 1) << ", ";
+            log << righttransmat.at(i).at_element(4, 1) << ", ";
+            log << righttransmat.at(i).at_element(5, 1) << ", \n";
+        }
+        log.close();
+    }
+}
+
+/*!
+ * \brief Callback function for logging HEAD calibration.
+ *
+ * This function is called by the EyeTracker after HEAD calibration is finished. If the calibration checkbox
+ * is selected in Capture Settings, then a log file will be created with the HEAD calibration information.
+ *
+ * \param pg_pog_mapping_left Transformation matrix between PG and POG for the left eye.
+ * \param pg_pog_mapping_right Transformation matrix between PG and POG for the right eye.
+ * \param pupil_pg_mapping_left Transformation matrix between pupil center and PG for the left eye.
+ * \param pupil_pg_mapping_right Transformation matrix between pupil center and PG for the right eye.
+ * \param glintdist Mean glint distance during calibration (between main and secondary glints)
+ */
+void GazeTrackGUI::logHEADCalibration(std::vector<std::vector<cv::Vec2f>> pg_pog_mapping_left, \
+                                      std::vector<std::vector<cv::Vec2f>> pg_pog_mapping_right, \
+                                      std::vector<std::vector<cv::Vec2f>> pupil_pg_mapping_left,\
+                                      std::vector<std::vector<cv::Vec2f>> pupil_pg_mapping_right, \
+                                      int glintdist) {
+    qDebug() << "Logging HEAD Calibration!";
+    if (_settings->value("record_calibration").toBool() == true) {
+
+        QString dir = _settings->value("logfile_directory",QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+
+        QString fn = dir;
+        QDateTime date = QDateTime::currentDateTime();
+        QString dateString = date.toString("'/caliblogHEAD'_dd:MM:yyyy_hh:mm:ss.'txt'");
+        dateString.replace(":","-");
+        fn.append(dateString);
+
+        std::ofstream log;
+        log.open(fn.toStdString(),std::ios::out);
+
+        log << "PG to POG mapping Left" << std::endl;
+        for (int i = 0 ; i < pg_pog_mapping_left.size() ; i++) {
+            log << "glint" << i << ":\n";
+            for (int j = 0 ; j < pg_pog_mapping_left.at(i).size() ; j++) {
+                log << pg_pog_mapping_left.at(i).at(j)[0] << "," ;
+                log << pg_pog_mapping_left.at(i).at(j)[1] << ",\n";
+            }
+        }
+
+        log << "PG to POG mapping Right" << std::endl;
+        for (int i = 0 ; i < pg_pog_mapping_right.size() ; i++) {
+            log << "glint" << i << ":\n";
+            for (int j = 0 ; j < pg_pog_mapping_right.at(i).size() ; j++) {
+                log << pg_pog_mapping_right.at(i).at(j)[0] << "," ;
+                log << pg_pog_mapping_right.at(i).at(j)[1] << ",\n";
+            }
+        }
+
+        log << "Pupil to PG mapping Left" << std::endl;
+        for (int i = 0 ; i < pupil_pg_mapping_left.size() ; i++) {
+            log << "glint" << i << ":\n";
+            for (int j = 0 ; j < pupil_pg_mapping_left.at(i).size() ; j++) {
+                log << pupil_pg_mapping_left.at(i).at(j)[0] << "," ;
+                log << pupil_pg_mapping_left.at(i).at(j)[1] << ",\n";
+            }
+        }
+
+        log << "Pupil to PG mapping Right" << std::endl;
+        for (int i = 0 ; i < pupil_pg_mapping_right.size() ; i++) {
+            log << "glint" << i << ":\n";
+            for (int j = 0 ; j < pupil_pg_mapping_right.at(i).size() ; j++) {
+                log << pupil_pg_mapping_right.at(i).at(j)[0] << "," ;
+                log << pupil_pg_mapping_right.at(i).at(j)[1] << ",\n";
+            }
+        }
+        log.close();
+    }
+
+}

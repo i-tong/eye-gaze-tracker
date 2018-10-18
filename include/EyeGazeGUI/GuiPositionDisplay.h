@@ -7,8 +7,9 @@ Created on: August 1, 2018
 (c) Copyright 2018 University of British Columbia
 
 --- begin license - do not edit ---
-    This file is a part of CGaze UI.
-    
+
+    This file is part of CGaze UI.
+
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -25,18 +26,22 @@ Created on: August 1, 2018
 */
 
 
+
+
 #ifndef GAZEPOSITIONDISPLAY_H
 #define GAZEPOSITIONDISPLAY_H
 
 #include <QDialog>
-#include <qpoint.h>
-#include <qpainter.h>
-#include <qtimer.h>
-#include <qelapsedtimer.h>
+#include <QPoint>
+#include <QPainter>
+#include <QTimer>
+#include <QElapsedTimer>
+#include <QDebug>
+
 #include "EyeTracker.h"
 #include "EyeGazeCommon.h"
 #include "UtilGui.h"
-#include <qdebug.h>
+
 
 
 class GazePositionDisplay : public QDialog
@@ -47,12 +52,12 @@ public:
     GazePositionDisplay(EyeTracker* tracker);
     ~GazePositionDisplay(void);
 public slots:
-   void update();
+    void update();
 
- private:
-   void paintEvent(QPaintEvent *event);
-  EyeTracker*  pTracker;
-    QTimer* mtimer;
+private:
+    void paintEvent(QPaintEvent *event);
+    EyeTracker*  _p_tracker;
+    QTimer* _timer;
 };
 
 #endif // GAZEPOSITIONDISPLAY_H

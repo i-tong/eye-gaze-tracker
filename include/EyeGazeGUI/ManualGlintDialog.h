@@ -7,8 +7,9 @@ Created on: August 1, 2018
 (c) Copyright 2018 University of British Columbia
 
 --- begin license - do not edit ---
-    This file is a part of CGaze UI.
-    
+
+    This file is part of CGaze UI. 
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -23,6 +24,8 @@ Created on: August 1, 2018
     along with Cgaze UI.  If not, see <https://www.gnu.org/licenses/>.
 --- end license ---
 */
+
+
 
 
 #ifndef MANUALGLINTWINDOW_H
@@ -46,22 +49,21 @@ public:
     void drawImage(QImage image);
 
 private:
-    GazeToolbar* mToolbar;
-    EyeTracker* mtracker;
+    enum GlintId {L0,L1,L2,R0,R1,R2};
+
+    GazeToolbar* _toolbar;
+    EyeTracker* _tracker;
     QSettings* _settings;
-    QImage displayImage;
-    QLabel* instruction;
-    QLabel* nextGlint;
-    QLabel* nomenclature;
-    QPushButton* nextButton;
-    std::vector<QPoint> glints;//L0, L1, L2,R0,R1,R2;
-    enum GLINTID {L0,L1,L2,R0,R1,R2};
-    GLINTID glintid;
-    float ratio;
+    QImage _display_image;
+    QLabel* _instruction;
+    QLabel* _next_glint;
+    QLabel* _example_im;
+    QPushButton* _next_button;
+    std::vector<QPoint> _glints; //L0,L1,L2,R0,R1,R2;
+    GlintId _glintid;
+    float _ratio;
 
     void setTemplate();
-    std::vector<QPoint> glintmark;
-//    QGroupBox* groupBox;
 
 signals:
 

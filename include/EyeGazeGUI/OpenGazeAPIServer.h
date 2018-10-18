@@ -7,8 +7,9 @@ Created on: August 1, 2018
 (c) Copyright 2018 University of British Columbia
 
 --- begin license - do not edit ---
-    This file is a part of CGaze UI.
-    
+
+    This file is part of CGaze UI. 
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -23,6 +24,8 @@ Created on: August 1, 2018
     along with Cgaze UI.  If not, see <https://www.gnu.org/licenses/>.
 --- end license ---
 */
+
+
 
 
 #ifndef OPENGAZEAPISERVER_H
@@ -48,8 +51,8 @@ Created on: August 1, 2018
 
 #include <opencv2/opencv.hpp>
 
-//#include <QXmlDeclHandler>
 #include "EyeGazeCommon.h"
+
 #include <map>
 #include <time.h>
 
@@ -91,7 +94,6 @@ enum state {
     EnableSendCursor,
     EnableSendBlink,
     EnableSendUserData
-
 };
 
 /*!
@@ -106,7 +108,6 @@ enum request {
     CalibrateClear,
     CalibrateReset,
     CalibrateAddPoint
-
 };
 
 
@@ -134,14 +135,12 @@ signals:
     void OPAPI_RequestValue(QString id);
     void OPAPI_SetValue(QString id, float value);
     void OPAPI_CalibrateAddpoint(float X, float Y);
+
     // Used as a callback function for streaming record data
     void OPAPI_SendRecord_Callback(rclgaze::OpenAPIDataRecord);
 
 public slots:
     void OPAPI_SendRecord(rclgaze::OpenAPIDataRecord);
-
-
-    void OPAPI_SendCalRecord(cv::Point target);
 
     void OPAPI_SendCalResult(int numPts, \
                              std::vector<cv::Point2f> targetPos, \
@@ -169,15 +168,15 @@ private:
     std::vector<bool> state_flag;
     QMutex _mutex;
     std::map<QString, int> commands_map;
-    // Custom data records, only works if m_sendUserData is enabled
-    bool m_sendPSM1Data;
-    bool m_sendPSM2Data;
-    bool m_sendPSM3Data;
-    bool m_sendECMData;
+    // Custom data records, only works if _sendUserData is enabled
+    bool _sendPSM1Data;
+    bool _sendPSM2Data;
+    bool _sendPSM3Data;
+    bool _sendECMData;
 
-    QTcpServer* m_server;
-    QXmlStreamReader* m_xmlReader;
-    std::vector<QTcpSocket*> m_socketVec;
+    QTcpServer* _server;
+    QXmlStreamReader* _xmlReader;
+    std::vector<QTcpSocket*> _socketVec;
 
     void readXML();
     void formatXML();
@@ -186,10 +185,14 @@ private:
     void sendCalibrationRecord();
     void handleCalibrationRequest(QXmlStreamAttributes att, OpenGazeAPI::request request);
 
-    int count;
+    // Count index of sent data
+    int _count;
 
-    bool m_requestExists;
-    std::vector<QXmlStreamAttributes> m_requestList;
+    bool _requestExists;
+    std::vector<QXmlStreamAttributes> _requestList;
+
+    QString _address;
+    unsigned int _port;
 };
 
 #endif // OPENGAZEAPISERVER_H

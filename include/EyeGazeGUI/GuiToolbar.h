@@ -7,8 +7,9 @@ Created on: August 1, 2018
 (c) Copyright 2018 University of British Columbia
 
 --- begin license - do not edit ---
-    This file is a part of CGaze UI.
-    
+
+    This file is part of CGaze UI. 
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -24,16 +25,15 @@ Created on: August 1, 2018
 --- end license ---
 */
 
-
 #ifndef GAZETOOLBAR_H
 #define GAZETOOLBAR_H
 
-#include <qtoolbar.h>
-#include <qpushbutton.h>
-#include <qcombobox.h>
 #include "EyeGazeCommon.h"
-//#include "UtilCamera.h"
-#include "qapplication.h"
+
+#include <QToolBar>
+#include <QPushButton>
+#include <QComboBox>
+#include <QApplication>
 #include <QDesktopWidget>
 #include <QGridLayout>
 #include <QLabel>
@@ -51,19 +51,13 @@ public:
 	QPushButton* pushButton_Start;
 	QPushButton* pushButton_Calibrate;
     QPushButton* pushButton_ShowGaze;
-    //QComboBox* comboBox_trackerInputRight;
-    //QComboBox* comboBox_trackerInputLeft;
     QComboBox* comboBox_trackerInputBoth;
-	QComboBox* comboBox_calibNumber;
-//	QComboBox* comboBox_trackerType;
+    QComboBox* comboBox_calibNumber;
 	QComboBox* comboBox_calibMonitor;
     QComboBox* comboBox_calibEye;
     QPushButton* pushButton_Log;
-    //QPushButton* pushButton_Calibrate3D;
-    QPushButton* pushButton_streamGazePosition;
     QPushButton* pushButton_ManualGlints;
     QPushButton* pushButton_Head;
-    //QPushButton* pushButton_HeadRepeat;
 
     bool isLooking();
     
@@ -74,22 +68,15 @@ public:
     bool getStatus_pushButton_manualGlint();
 public slots:
     void onButtonClickLog();
-	void onButtonClickStart();
-	void onButtonClickCalibNumber();
-	void onComboBoxSelect_trackerType();
-   // void onButtonClick_Calibrate3D();
-    void onButtonClick_StreamGaze();
+    void onButtonClickStart();
     void onButtonClick_ShowGaze();
 
 private:
 	void initLayout();
-	bool startButtonOn;
-	bool calibrateButtonOn;
-    bool showGazeButtonOn;
-    bool logButtonOn;
-    bool streamGazeButtonOn;
-    bool manualGlints;
+    bool _start_button_on;
+    bool _calibrate_button_on;
+    bool _log_button_on;
+    bool _manual_glints_open;
 };
 
 #endif
-

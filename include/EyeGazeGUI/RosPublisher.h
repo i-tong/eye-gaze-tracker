@@ -7,8 +7,9 @@ Created on: August 1, 2018
 (c) Copyright 2018 University of British Columbia
 
 --- begin license - do not edit ---
-    This file is a part of CGaze UI.
-    
+
+    This file is part of CGaze UI. 
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -25,6 +26,8 @@ Created on: August 1, 2018
 */
 
 
+
+
 #ifndef ROSPUBLISHER_H
 #define ROSPUBLISHER_H
 
@@ -34,7 +37,7 @@ Created on: August 1, 2018
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <QTimer>
-b#include <ros/ros.h>
+#include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 
 /**

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>gazeTrackGUI</string>
+   <string>CGaze UI</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QWidget" name="verticalLayoutWidget">
@@ -20,12 +20,12 @@
       <x>10</x>
       <y>0</y>
       <width>1301</width>
-      <height>521</height>
+      <height>622</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="GazeDisplayWidget" name="widget" native="true">
+      <widget class="GuiDisplayWidget" name="widget" native="true">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -41,9 +41,23 @@
       </widget>
      </item>
      <item>
+      <widget class="QLabel" name="statusLabelCalibration">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QLabel" name="statusLabelCamera">
        <property name="text">
-        <string>TextLabel</string>
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="statusLabelFPS">
+       <property name="text">
+        <string>0 FPS</string>
        </property>
       </widget>
      </item>
@@ -83,31 +97,11 @@
     <addaction name="actionLeft_Video_Source"/>
     <addaction name="separator"/>
     <addaction name="actionLeft_Right_Video_Source"/>
-   </widget>
-   <widget class="QMenu" name="menuCapture">
-    <property name="title">
-     <string>Capture</string>
-    </property>
-    <addaction name="actionStart_Recording"/>
-    <addaction name="actionStop_Recording"/>
+    <addaction name="separator"/>
     <addaction name="actionCapture_Settings"/>
+    <addaction name="actionOPAPI_Settings"/>
    </widget>
    <addaction name="menuSettings"/>
-   <addaction name="menuCapture"/>
-  </widget>
-  <widget class="QToolBar" name="mainToolBar">
-   <property name="minimumSize">
-    <size>
-     <width>50</width>
-     <height>0</height>
-    </size>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionStart">
@@ -160,13 +154,18 @@
     <string>Same left/right video</string>
    </property>
   </action>
+  <action name="actionOPAPI_Settings">
+   <property name="text">
+    <string>OPAPI Settings</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>GazeDisplayWidget</class>
+   <class>GuiDisplayWidget</class>
    <extends>QWidget</extends>
-   <header>GazeDisplayWidget.h</header>
+   <header>GuiDisplayWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -7,8 +7,9 @@ Created on: August 1, 2018
 (c) Copyright 2018 University of British Columbia
 
 --- begin license - do not edit ---
-    This file is a part of CGaze UI.
-    
+
+    This file is part of CGaze UI. 
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -23,7 +24,6 @@ Created on: August 1, 2018
     along with Cgaze UI.  If not, see <https://www.gnu.org/licenses/>.
 --- end license ---
 */
-
 
 #ifndef DIALOG_DATALOGSETTINGS_H
 #define DIALOG_DATALOGSETTINGS_H
@@ -50,14 +50,15 @@ private slots:
     void onPushButtonPressedBrowse();
     void onCheckBoxSelected();
 private:
-    QSettings* _settings;
-    QCheckBox* m_checkBoxList[16];
-    QString m_settingsFilename;
-    QGridLayout* m_layout;
     void loadSettings();
     void initializeWidgets();
-    QPushButton* m_button_browse;
-    QLineEdit* m_lineEdit_logDirectory;
+
+    QSettings* _settings;
+    QCheckBox* _checkBoxList[17];
+    QString _settings_filename;
+    QGridLayout* _layout;
+    QPushButton* _button_browse;
+    QLineEdit* _lineEdit_logDirectory;
 };
 
 #endif // DIALOG_DATALOGSETTINGS_H

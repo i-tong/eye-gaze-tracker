@@ -9,7 +9,7 @@ Created on: August 1, 2018
 --- begin license - do not edit ---
 
     This file is part of CGaze UI. 
-    
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -24,39 +24,34 @@ Created on: August 1, 2018
     along with Cgaze UI.  If not, see <https://www.gnu.org/licenses/>.
 --- end license ---
 */
+
 #include "GuiDisplayWidget.h"
 
-GazeDisplayWidget::GazeDisplayWidget(QWidget *parent)
+GuiDisplayWidget::GuiDisplayWidget(QWidget *parent)
     : QWidget(parent)
 {
 	this->setMinimumWidth(640);
 	this->setMinimumHeight(480);
-
 }
 
-GazeDisplayWidget::~GazeDisplayWidget()
+GuiDisplayWidget::~GuiDisplayWidget()
 {
-
 }
 
-void GazeDisplayWidget::drawImage(QImage image) {
-	displayImage = image.copy();
+void GuiDisplayWidget::drawImage(QImage image) {
+    _display_image = image.copy();
 	this->repaint();
 }
 
-void GazeDisplayWidget::paintEvent(QPaintEvent *) {
-	QPainter p(this);
- 	//p.fillRect(0,0,640,480,Qt::green);
-    if (displayImage.isNull()) {
-        //printf("NULL!\n");
+void GuiDisplayWidget::paintEvent(QPaintEvent *) {
+    QPainter p(this);
+    if (_display_image.isNull()) {
 		p.fillRect(0,0,this->width(),this->height(),Qt::gray);
 	} else{
 		// Determine 0,0 pixel locations
 		p.fillRect(0,0,this->width(),this->height(),Qt::gray);
-		int x = (this->width()-displayImage.width())/2;
-		int y = (this->height()-displayImage.height())/2;
-		p.drawImage(QPoint(x,y),displayImage);
+        int x = (this->width()-_display_image.width())/2;
+        int y = (this->height()-_display_image.height())/2;
+        p.drawImage(QPoint(x,y),_display_image);
 	}
 }
-
-

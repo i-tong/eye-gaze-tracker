@@ -7,8 +7,9 @@ Created on: August 1, 2018
 (c) Copyright 2018 University of British Columbia
 
 --- begin license - do not edit ---
-    This file is a part of CGaze UI.
-    
+
+    This file is part of CGaze UI. 
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -24,25 +25,26 @@ Created on: August 1, 2018
 --- end license ---
 */
 
-
 #ifndef HEADCOMPENSATIONDIALOG_H
 #define HEADCOMPENSATIONDIALOG_H
 
 #include <QDialog>
+#include <QCloseEvent>
 #include <EyeTracker.h>
 #include <CalibrationHead.h>
 #include <QMessageBox>
-
+#include <QPalette>
+#include <QStatusBar>
 namespace Ui {
 class HeadCompensationDialog;
 }
 
 enum headDirection {
+    HEAD_NONE,
     HEAD_LEFT,
     HEAD_RIGHT,
     HEAD_UP,
-    HEAD_DOWN,
-    HEAD_NONE
+    HEAD_DOWN
 };
 
 class HeadCompensationDialog : public QDialog
@@ -54,7 +56,7 @@ public:
     ~HeadCompensationDialog();
     void showEvent(QShowEvent *);
     void setDisplayMonitor(int monitorId);
-
+    void closeEvent(QCloseEvent *event);
 private slots:
     void onButtonClick_left();
     void onButtonClick_right();
@@ -62,14 +64,17 @@ private slots:
     void onButtonClick_down();
     void onButtonClick_finished();
     void finished();
+    void startCalibration();
 private:
+    void paintEvent(QPaintEvent *event);
+    void showCalibrationError();
+
     Ui::HeadCompensationDialog *ui;
     EyeTracker* _tracker;
-    CalibrationHead* _calHead;
-    void showCalibrationError();
-    headDirection _currDir;
-    std::vector<int> _countDoneVector;
-    int _monitorId;
+    CalibrationHead* _cal_head;
+    headDirection _curr_dir;
+    QTimer* _paint_timer;
+    int _monitor_id;
 };
 
 #endif // HEADCOMPENSATIONDIALOG_H

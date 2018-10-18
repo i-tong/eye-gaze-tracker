@@ -9,7 +9,7 @@ Created on: August 1, 2018
 --- begin license - do not edit ---
 
     This file is part of CGaze UI. 
-    
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -25,7 +25,11 @@ Created on: August 1, 2018
 --- end license ---
 */
 
+
+
+
 #include "UtilString.h"
+
 
 bool checkEndWith(const char* inputStr, const char* endStr) {
     const char * pch;
@@ -35,5 +39,4 @@ bool checkEndWith(const char* inputStr, const char* endStr) {
     }
     return false;
 }
-
 

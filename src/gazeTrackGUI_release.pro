@@ -8,8 +8,8 @@
 #
 # --- begin license - do not edit ---
 #
-#    This file is part of CGaze UI. 
-#    
+#    This file is part of CGaze UI.
+#
 #    CGaze UI is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
@@ -62,10 +62,9 @@ SOURCES += \
         GuiHeadCompensationDialog.cpp \
         GuiPositionDisplay.cpp \
         ManualGlintDialog.cpp \
-        CalibrationReDialog.cpp \
         GazeDataLogger.cpp \
-        UtilSocket.cpp
-
+        UtilSocket.cpp \
+        GuiOpenGazeSettingsDialog.cpp
 HEADERS  +=  \
         $$PWD/../include/EyeGazeGUI/Gui.h \
         $$PWD/../include/EyeGazeGUI/GuiDisplayWidget.h \
@@ -79,11 +78,9 @@ HEADERS  +=  \
         $$PWD/../include/EyeGazeGUI/GuiHeadCompensationDialog.h \
         $$PWD/../include/EyeGazeGUI/GuiPositionDisplay.h \
         $$PWD/../include/EyeGazeGUI/ManualGlintDialog.h \
-        $$PWD/../include/EyeGazeGUI/CalibrationReDialog.h \
         $$PWD/../include/EyeGazeGUI/GazeTrackerInterface.h \
         $$PWD/../include/EyeGazeGUI/GazeDataLogger.h \
-        $$PWD/../include/EyeGazeDetectionLib/EyeDetector.h \
-        $$PWD/../include/EyeGazeCalibrationLib/Gaze2DEstimation.h \
+        $$PWD/../include/EyeGazeGUI/GuiOpenGazeSettingsDialog.h \
         $$PWD/../include/UtilLib/EyeGazeCommon.h \
         $$PWD/../include/UtilLib/UtilSocket.h
 

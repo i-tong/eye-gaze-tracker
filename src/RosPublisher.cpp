@@ -9,7 +9,7 @@ Created on: August 1, 2018
 --- begin license - do not edit ---
 
     This file is part of CGaze UI. 
-    
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -24,6 +24,9 @@ Created on: August 1, 2018
     along with Cgaze UI.  If not, see <https://www.gnu.org/licenses/>.
 --- end license ---
 */
+
+
+
 
 #include "RosPublisher.h"
 
@@ -76,4 +79,3 @@ void RosPublisher::streamGazePosition()
         _pub.publish(_msg);
     }
 }
-

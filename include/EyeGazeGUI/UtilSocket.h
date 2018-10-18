@@ -7,8 +7,9 @@ Created on: August 1, 2018
 (c) Copyright 2018 University of British Columbia
 
 --- begin license - do not edit ---
-    This file is a part of CGaze UI.
-    
+
+    This file is part of CGaze UI. 
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -25,13 +26,8 @@ Created on: August 1, 2018
 */
 
 
-/***
-Based off of: http://theboostcpplibraries.com/boost.asio-network-programming#ex.asio_05
 
-https://gist.github.com/bechu/2423333
 
-http://stackoverflow.com/questions/22581315/how-to-discard-data-as-it-is-sent-with-boostasio/22598329#22598329
-***/
 
 
 #ifndef UTILSOCKET_H

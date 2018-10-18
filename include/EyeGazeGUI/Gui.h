@@ -7,8 +7,9 @@ Created on: August 1, 2018
 (c) Copyright 2018 University of British Columbia
 
 --- begin license - do not edit ---
-    This file is a part of CGaze UI.
-    
+
+    This file is part of CGaze UI.
+
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -24,67 +25,70 @@ Created on: August 1, 2018
 --- end license ---
 */
 
-
 #ifndef GAZETRACKGUI_H
 #define GAZETRACKGUI_H
 
-//#include <QtWidgets/QMainWindow>
-#include <QMainWindow>
-#include <QPushButton>
-#include <QTimer>
-#include <QImage>
-#include <QMessageBox>
-#include <qdebug.h>
-#include <qfiledialog.h>
-#include <QProgressDialog>
-#include "qapplication.h"
-#include <QDesktopWidget>
-#include "qhash.h"
-
-#include <boost/lockfree/queue.hpp>
-
-#include "ui_gazetrackgui.h"
-
 // Qt
 #include <QApplication>
-#include <QDesktopWidget>
-#include <QHash>
-#include <QSettings>
 #include <QStandardPaths>
+#include <QDateTime>
+#include <QDebug>
+#include <QDesktopWidget>
+#include <QFileDialog>
+#include <QHash>
+#include <QImage>
+#include <QMainWindow>
+#include <QMessageBox>
+#include <QProgressDialog>
+#include <QPushButton>
+#include <QSettings>
+#include <QTimer>
+
+#include "ui_gazetrackgui.h"
 
 // Gaze
 #include "GuiToolbar.h"
 #include "OpenGazeAPIServer.h"
 #include "EyeTracker.h"
-#include "GazeDataLogger.h"
 #include "CalibrationDialog.h"
 #include "GuiDisplayWidget.h"
 #include "GuiToolbar.h"
 #include "GuiParamToolbar.h"
-#include "GuiDebugWindow.h"
 #include "GuiDataLogSettings.h"
 #include "GuiPositionDisplay.h"
 #include "GuiHeadCompensationDialog.h"
 #include "ManualGlintDialog.h"
-#include "CalibrationReDialog.h"
 #include "CalibrationHead.h"
 #include "OpenGazeAPIServer.h"
 #include "UtilGui.h"
+#include "GuiOpenGazeSettingsDialog.h"
 
 // Boost
 #include <boost/lockfree/queue.hpp>
+#include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/function.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 
+// std
 #include <time.h>
 #include <cmath>
 #include <fstream>
+
+/*!
+ * \brief The displaySource enum is used to keep track of the source for the display.
+*/
 enum displaySource {
     TRACKER,
     NO_SOURCE
-    //SCENE?
 };
 
+/*!
+ * \brief The GazeTrackGUI class is the main window of the GUI.
+ *
+ * The GazeTrackGUI class handles all of the user input in the main window. It communicates
+ * with the eye gaze tracker. From this GUI calibration and logging can be carried out.
+ */
 class GazeTrackGUI : public QMainWindow
 {
     Q_OBJECT
@@ -99,24 +103,28 @@ public slots:
     void buttonClickedStartCalibration();
     void buttonClickedLog();
 
-    void buttonClickedStreamGazePosition();
     void buttonClickedManualGlints();
     void buttonClickedHead();
     void buttonClickedShowGaze();
-//    void comboBoxChangedTrackerType(QString str);
     void menuItemSelectedVideoSourceRight();
     void menuItemSelectedVideoSourceLeft();
-    void menuItemSelectedVideoSourceLeft_Right();
-    void menuItemSelectedStartRecording();
-    void menuItemSelectedStopRecording();
     void menuItemSelectedCaptureSettings();
-    void gazeParamChanged(QHash<QString, float> paramHash);
+    void menuItemSelectedOPAPISettings();
     void comboBoxChanged_calibEye(QString str);
     void comboBoxChanged_calibNumber(QString str);
     void getValue(QString ID);
     void setValue(QString ID, float value);
     void addCalibrationPoint(float X, float Y) ;
     void showCalibrationResults();
+    void logCalibration(std::vector<boost::numeric::ublas::matrix<double>> lefttransmat, \
+                        std::vector<boost::numeric::ublas::matrix<double>> righttransmat, \
+                        int main_glint_left, int main_glint_right, \
+                        int sec_glint_left, int sec_glint_right);
+    void logHEADCalibration(std::vector<std::vector<cv::Vec2f>> pg_pog_mapping_left, \
+                            std::vector<std::vector<cv::Vec2f>> pg_pog_mapping_right, \
+                            std::vector<std::vector<cv::Vec2f>> pupil_pg_mapping_left,\
+                            std::vector<std::vector<cv::Vec2f>> pupil_pg_mapping_right, \
+                            int glintdist);
 signals:
     void returnValue(QString ID, float value);
     void returnScreenSize(QString ID, int x, int y, int width, int height);
@@ -125,57 +133,44 @@ signals:
     void streamCalibrationTargetPositions(QString ID, std::vector<cv::Point2f> targetPos);
     void returnNoValue(QString ID);
 private:
+    // UI
+    void closeEvent(QCloseEvent *event);
+    Ui::gazeTrackGUIClass ui; /*!< Qt UI for gazeTrackGUI */
+    displaySource display; /*! The current display source */
+    QTimer* im_timer; /*! Timer for refreshing the display */
+    QImage dispImage; /*! Current image of eyes to be displayed in UI */
+    QMessageBox errorBox; /*! Error dialog */
+    GazeToolbar* mainToolbar; /*! Toolbar containing buttons and controls */
 
-    Ui::gazeTrackGUIClass ui;
-    EyeTracker* tracker;
-    displaySource display;
-    OpenGazeAPIServer* _api_server;
-    QTimer* im_timer;
-    QImage dispImage;
-    cv::RotatedRect pFound_R;
-    cv::RotatedRect pFound_L;
-    cv::VideoWriter video;
-    std::ofstream logfile;
-    double frameRate;
-    std::vector<double> frameRateList;
-    QSettings* _settings;
+    // Settings
+    QString videoSourceRightFilename; /*! The filename of the video of the right eye */
+    QString videoSourceLeftFilename; /*! The filename of the video of the left eye */
+    QSettings* _settings; /*! Settings file */
+    GuiOpenGazeSettingsDialog* _opapiSettingsDialog;
+    // Eye tracker
+    EyeTracker* tracker; /*! Eye gaze tracker */
+    OpenGazeAPIServer* _api_server; /*! TCP/IP server for the Open Gaze API */
+    cv::RotatedRect pFound_R; /*! Right eye pupil */
+    cv::RotatedRect pFound_L; /*! Left eye pupil */
+    double frameRate; /*! Current frame rate */
+    std::vector<double> frameRateList; /*! List of previous frame rates, used to calculate mean FPS */
 
     // Calibration
-    CalibrationHead* calHead;
     void initCalibrationByGUI();
-    HeadCompensationDialog* dialog_head_calibration;
-    float caliberr_right;
-    float caliberr_left;
-    // Gaze display ui
-    GazePositionDisplay* gazedisplay;
+    CalibrationHead* calHead; /*! Head calibration target dialog */
+    HeadCompensationDialog* dialog_head_calibration; /*! Main head calibration dialog */
+    float caliberr_right; /*! Current calibration error result for the right eye */
+    float caliberr_left; /*! Current calibration error result for the left eye */
+    GazePositionDisplay* gazedisplay; /*! Dialog for displaying the current gaze position, helpful for monitoring tracking */
 
-    // UI Setup
-    GazeToolbar* mainToolbar;
-    // Settings
-    QString videoSourceRightFilename;
-    QString videoSourceLeftFilename;
-
-    //error pop up
-    QMessageBox errorBox;
-
-    //ros publisher
-    //RosPublisher* rospublisher;
-
-
-    //glint window
-    ManualGlintDialog* glintWindow;
-
-    // for robot recalibration
-    //RobotReCalibration* robotRe;
-
-    // Open Gaze API
-    OpenGazeAPIServer* opapi_server;
+    // Glint
+    ManualGlintDialog* glintWindow; /*! Glint template calibration dialog */
 
     // Logging
     void logData(rclgaze::log_data data);
     void showCalibrationWindow(bool show);
-protected:
-     void closeEvent(QCloseEvent *event);
+    std::ofstream logfile; /*! Output log file */
+
 
 };
 

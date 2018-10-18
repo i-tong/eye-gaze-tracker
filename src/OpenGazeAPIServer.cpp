@@ -9,7 +9,7 @@ Created on: August 1, 2018
 --- begin license - do not edit ---
 
     This file is part of CGaze UI. 
-    
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -25,11 +25,12 @@ Created on: August 1, 2018
 --- end license ---
 */
 
-
 #include "OpenGazeAPIServer.h"
 
 OpenGazeAPIServer::OpenGazeAPIServer()
 {
+    _address = "127.0.0.1";
+    _port = 4242;
     commands_map["ENABLE_SEND_DATA"] =       OpenGazeAPI::EnableSendData;
     commands_map["ENABLE_SEND_COUNTER"] =    OpenGazeAPI::EnableSendCounter;
     commands_map["ENABLE_SEND_TIME"] =       OpenGazeAPI::EnableSendTime;
@@ -50,33 +51,31 @@ OpenGazeAPIServer::OpenGazeAPIServer()
         state_flag.push_back(false);
     }
 
-    m_server = new QTcpServer();
-    m_xmlReader = new QXmlStreamReader();
+    _server = new QTcpServer();
+    _xmlReader = new QXmlStreamReader();
 
     // Set up signals and slots
     qRegisterMetaType<rclgaze::OpenAPIDataRecord>("rclgaze::OpenAPIDataRecord");
-    connect(m_server,SIGNAL(newConnection()),this,SLOT(addClientConnection()));
+    connect(_server,SIGNAL(newConnection()),this,SLOT(addClientConnection()));
     connect(this,SIGNAL(OPAPI_SendRecord_Callback(rclgaze::OpenAPIDataRecord)), \
             this, SLOT(OPAPI_SendRecord(rclgaze::OpenAPIDataRecord)));
+
+     _count = 0; // Number of data packets sent
+
+    _requestExists = false;
+
     this->StartListening();
-
-    count = 0;
-
-    m_requestExists = false;
 }
 
 OpenGazeAPIServer::~OpenGazeAPIServer() {
-    for (int i = 0 ; i < m_socketVec.size(); i++) {
-        m_socketVec.at(i)->disconnect();
+    for (int i = 0 ; i < _socketVec.size(); i++) {
+        _socketVec.at(i)->disconnect();
     }
 }
 
 void OpenGazeAPIServer::OPAPI_SendRecord(rclgaze::OpenAPIDataRecord rec) {
-
-
  //   qDebug() << "OPAPI_SendRecord";
     this->sendRecord(rec);
-
 }
 
 void OpenGazeAPIServer::OPAPI_SendCalStart(int targetID, cv::Point2f target) {
@@ -104,23 +103,20 @@ void OpenGazeAPIServer::streamData(rclgaze::OpenAPIDataRecord rec) {
     // A signal needs to be emitted because Qt sockets cannot be used by multiple threads.
     //qDebug() << "Stream data";
     if (state_flag.at(OpenGazeAPI::EnableSendData) == true) {
-
         emit OPAPI_SendRecord_Callback(rec);
     }
-
-
 }
 
 void OpenGazeAPIServer::sendRecord(rclgaze::OpenAPIDataRecord record) {
    // qDebug() << "endRecord";
     QString recstr = "<REC ";
     if (state_flag.at(OpenGazeAPI::EnableSendData) != true) {
-        count = 0;
+         _count = 0;
         return;
     } else {
         // Counters
         if (state_flag.at(OpenGazeAPI::EnableSendCounter)) {
-            recstr.append(QString("CNT=\"%1\" ").arg(count));
+            recstr.append(QString("CNT=\"%1\" ").arg( _count));
         }
         if (state_flag.at(OpenGazeAPI::EnableSendTime)) {
 
@@ -178,12 +174,8 @@ void OpenGazeAPIServer::sendRecord(rclgaze::OpenAPIDataRecord record) {
 
         recstr.append("/>");
         this->sendReply(recstr);
-        count += 1;
+         _count += 1;
     }
-}
-
-void OpenGazeAPIServer::OPAPI_SendCalRecord(cv::Point target) {
-
 }
 
 void OpenGazeAPIServer::OPAPI_SendCalResult(int numPts, \
@@ -200,7 +192,7 @@ void OpenGazeAPIServer::OPAPI_SendCalResult(int numPts, \
         return;
     }
 
-    for (unsigned int i = 0 ; i < numPts ; i++) {
+    for (int i = 0 ; i < numPts ; i++) {
         calstr.append(QString("CALX%1=\"%2\" ").arg(i).arg(targetPos.at(i).x));
         calstr.append(QString("CALY%1=\"%2\" ").arg(i).arg(targetPos.at(i).y));
         calstr.append(QString("LX%1=\"%2\" ").arg(i).arg(leftGaze.at(i).x));
@@ -241,8 +233,7 @@ void OpenGazeAPIServer::OPAPI_ReplyScreenSize(QString id, int x, int y, int widt
 
 void OpenGazeAPIServer::OPAPI_ReplyCalibPoints(QString id, std::vector<cv::Point2f> points) {
 
-    int numPts = points.size();
-    QString calstr = QString("<ACK ID=\"%1\" PTS=\"%2\" ").arg(id).arg(numPts);
+    QString calstr = QString("<ACK ID=\"%1\" PTS=\"%2\" ").arg(id).arg(points.size());
 
     for (unsigned int i = 0 ; i < points.size() ; i++ ) {
         calstr.append(QString("X%1=\"%2\" Y%1=\"%3\" ").arg(i).arg(points.at(i).x).arg(points.at(i).y));
@@ -266,26 +257,26 @@ void OpenGazeAPIServer::OPAPI_ReplyCalibSummary(QString id, float errLeft,float 
 
 }
 void OpenGazeAPIServer::StartListening() {
-    m_server->listen(QHostAddress("127.0.0.1"),4242);
-    qDebug() << "Listening";
+    _server->listen(QHostAddress(_address),_port);
+    //qDebug() << "Listening";
 }
 
 void OpenGazeAPIServer::addClientConnection() {
-    qDebug() << "Adding new client!";
+    //qDebug() << "Adding new client!";
 
-    m_socketVec.push_back(m_server->nextPendingConnection());
+    _socketVec.push_back(_server->nextPendingConnection());
 
-    connect(m_socketVec.back(),SIGNAL(readyRead()),this,SLOT(msgReceived()));
-    connect(m_socketVec.back(),SIGNAL(disconnected()),this,SLOT(removeClientConnection()));
+    connect(_socketVec.back(),SIGNAL(readyRead()),this,SLOT(msgReceived()));
+    connect(_socketVec.back(),SIGNAL(disconnected()),this,SLOT(removeClientConnection()));
 
 }
 
 void OpenGazeAPIServer::removeClientConnection() {
     _mutex.lock();
-    for (int i = m_socketVec.size()-1 ; i >= 0; i--) {
-        qDebug() << "Removing client" << i;
-        if (m_socketVec.at(i)->state() != QTcpSocket::ConnectedState) {
-            m_socketVec.erase(m_socketVec.begin() + i);
+    for (int i = int(_socketVec.size())-1 ; i >= 0; i--) {
+        //qDebug() << "Removing client" << i;
+        if (_socketVec.at(i)->state() != QTcpSocket::ConnectedState) {
+            _socketVec.erase(_socketVec.begin() + i);
         }
     }
     _mutex.unlock();
@@ -294,10 +285,10 @@ void OpenGazeAPIServer::removeClientConnection() {
 void OpenGazeAPIServer::msgReceived() {
     //_mutex.lock();
     //qDebug() << "Message received!";
-    for (unsigned int i = 0 ; i < m_socketVec.size() ; i++ ) {
+    for (unsigned int i = 0 ; i < _socketVec.size() ; i++ ) {
         QByteArray newdata;
-        while(m_socketVec.at(i)->bytesAvailable() > 0) {
-            newdata.append(m_socketVec.at(i)->readAll());
+        while(_socketVec.at(i)->bytesAvailable() > 0) {
+            newdata.append(_socketVec.at(i)->readAll());
         }
         //m_socketVec.at(i)->flush();
 
@@ -305,7 +296,7 @@ void OpenGazeAPIServer::msgReceived() {
             int endind = newdata.indexOf("\r\n") + 2;
             QByteArray xml_element = newdata.mid(0,endind);
 
-            m_xmlReader->addData(xml_element);
+            _xmlReader->addData(xml_element);
 
             qDebug() << xml_element;
             this->readXML();
@@ -314,12 +305,12 @@ void OpenGazeAPIServer::msgReceived() {
         }
         /*if (m_socketVec.at(i)->canReadLine()) {
             char buf[1024];
-            qint64 lineLength = m_socketVec.at(i)->readLine(buf, sizeof(buf));
-            m_socketVec.at(i)->flush();
+            qint64 lineLength = _socketVec.at(i)->readLine(buf, sizeof(buf));
+            _socketVec.at(i)->flush();
             if (lineLength != -1) {
                 // Message received!
                 qDebug() << buf;
-                m_xmlReader->addData(buf);
+                _xmlReader->addData(buf);
                 this->readXML();
             }
         }*/
@@ -333,12 +324,12 @@ void OpenGazeAPIServer::sendReply(QString msg) {
     _mutex.lock();
     QByteArray data = msg.toUtf8();
     int msg_size = data.size();
-    for (unsigned int i = 0 ; i < m_socketVec.size() ; i++ ) {
+    for (unsigned int i = 0 ; i < _socketVec.size() ; i++ ) {
        // qDebug() << "Sending reply:" << msg;
         int bytesWritten = 0;
-        bool isConnected = (m_socketVec.at(i)->state() == QTcpSocket::ConnectedState);
+        bool isConnected = (_socketVec.at(i)->state() == QTcpSocket::ConnectedState);
         while (bytesWritten < msg_size && isConnected) {
-            bytesWritten += m_socketVec.at(i)->write(data.data());
+            bytesWritten += _socketVec.at(i)->write(data.data());
         }
         //qDebug() << "Done sending" << i;
     }
@@ -352,18 +343,18 @@ void OpenGazeAPIServer::readXML() {
     // Cannot parse multiple elements in the same document
 
     //qDebug() << "\nreadxml function";
-    QXmlStreamReader::TokenType token = m_xmlReader->readNext();
+    QXmlStreamReader::TokenType token = _xmlReader->readNext();
 
     while (token != QXmlStreamReader::EndElement ){
         // Element
 
-        token = m_xmlReader->readNext();
-        // qDebug() << m_xmlReader->text().toString() ;
+        token = _xmlReader->readNext();
+        // qDebug() << _xmlReader->text().toString() ;
         if (token == QXmlStreamReader::Invalid) {
-           // qDebug() << "Error:" << m_xmlReader->errorString();
+           // qDebug() << "Error:" << _xmlReader->errorString();
         }
         // Attributes
-        QXmlStreamAttributes att = m_xmlReader->attributes();
+        QXmlStreamAttributes att = _xmlReader->attributes();
         // Set
         if (att.size() < 1) { // No attributes
             //qDebug() << "No attributes";
@@ -371,7 +362,7 @@ void OpenGazeAPIServer::readXML() {
         }
         // qDebug() << att.value("ID").toString();
         if (att.value("ID").toString().contains("CALIBRATE")) {
-            if ( m_xmlReader->name().toString().compare("SET")==0) {
+            if ( _xmlReader->name().toString().compare("SET")==0) {
                 qDebug() << "readXML" << "SET";
                 if (att.hasAttribute("STATE")) {
                     emit OPAPI_SetValue(att.value("ID").toString(),att.value("STATE").toFloat());
@@ -382,7 +373,7 @@ void OpenGazeAPIServer::readXML() {
                 if (att.hasAttribute("X") && att.hasAttribute(("Y"))) {
                     emit OPAPI_CalibrateAddpoint(att.value("X").toFloat(),att.value("Y").toFloat());
                 }
-            } else if ( m_xmlReader->name().toString().compare("GET")==0) {
+            } else if ( _xmlReader->name().toString().compare("GET")==0) {
                 // qDebug() << "readXML" << "GET";
                 emit OPAPI_RequestValue(att.value("ID").toString());
             }
@@ -390,7 +381,7 @@ void OpenGazeAPIServer::readXML() {
 
 
         // qDebug() << att.value("ID");
-        if (m_xmlReader->name().toString().compare("SET")==0){
+        if (_xmlReader->name().toString().compare("SET")==0){
             if (att.value("ID").toString().contains("ENABLE")) { // ID: Enable (affects record streaming, no need to communicate this with gaze tracker.)
                 state_flag.at(commands_map[att.value("ID").toString()]) = bool(att.value("STATE").toInt());
                 sendReply(QString("<ACK ID=\"%1\" STATE=\"%2\"/>").arg(att.value("ID").toString()).arg(att.value("STATE").toString()));
@@ -399,7 +390,7 @@ void OpenGazeAPIServer::readXML() {
                 //state_flag.at(commands_map[att.value("ID").toString()]) = bool(att.value("STATE").toInt());
                 //sendReply(QString("<ACK ID=\"%1\" STATE=\"%2\"/>").arg(att.value("ID").toString()).arg(att.value("STATE").toString()));
             }
-        } else if (m_xmlReader->name().toString().compare("GET")==0) {
+        } else if (_xmlReader->name().toString().compare("GET")==0) {
             emit OPAPI_RequestValue(att.value("ID").toString());
         }
 
@@ -410,7 +401,7 @@ void OpenGazeAPIServer::readXML() {
 
     //this->sendReply(QString().arg());
 
-    m_xmlReader->clear();
+    _xmlReader->clear();
    // qDebug() << "End readXML function";
 }
 
@@ -419,7 +410,7 @@ void OpenGazeAPIServer::formatXML() {
 }
 
 void OpenGazeAPIServer::handleCalibrationRequest(QXmlStreamAttributes att , OpenGazeAPI::request request) {
-    if (this->m_requestList.size() > 0) {
+    if (this->_requestList.size() > 0) {
         qDebug() << "Previous request has not yet been handled";
         // Should I wait here?
     }
@@ -432,7 +423,7 @@ void OpenGazeAPIServer::handleCalibrationRequest(QXmlStreamAttributes att , Open
 
     }
 
-    this->m_requestList.push_back(att);
+    this->_requestList.push_back(att);
 }
 
 void OpenGazeAPIServer::respondStartCalibration(bool start) {
@@ -441,10 +432,9 @@ void OpenGazeAPIServer::respondStartCalibration(bool start) {
 
 // Public functions
 void OpenGazeAPIServer::setHostAddress(QString ip) {
-
+    _address = ip;
 }
 
 void OpenGazeAPIServer::setPort(int port) {
-
+    _port = port;
 }
-

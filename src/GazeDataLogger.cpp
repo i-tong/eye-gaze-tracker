@@ -9,7 +9,7 @@ Created on: August 1, 2018
 --- begin license - do not edit ---
 
     This file is part of CGaze UI. 
-    
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -24,6 +24,8 @@ Created on: August 1, 2018
     along with Cgaze UI.  If not, see <https://www.gnu.org/licenses/>.
 --- end license ---
 */
+
+
 
 
 #include "GazeDataLogger.h"
@@ -300,7 +302,8 @@ void GazeDataLogger::run() {
         std::fstream log;
         log.open(m_logFilename.toStdString(), std::fstream::in | std::fstream::out | std::fstream::app);
         log << std::setprecision(32) << data.value("timestamp") << ",";
-        //qDebug() << data.value("timestamp");
+        log << std::setprecision(32) << data.value("timetick") << ",";
+        log << data.value("frame_count") << ",";
         // Right
         if (m_flag_pupilPositionRight) {
             log << data.value("pupil_x_position_right") << "," << data.value("pupil_y_position_right") << ",";
@@ -512,4 +515,3 @@ void GazeDataLogger::loadSettings() {
     m_flag_psm3_pos = settings.value("robot_psm3_cartesian_position").toBool();
     m_flag_pogPosition3D = settings.value("pog_position_3d").toBool();
 }
-

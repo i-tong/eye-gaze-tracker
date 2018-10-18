@@ -9,7 +9,7 @@ Created on: August 1, 2018
 --- begin license - do not edit ---
 
     This file is part of CGaze UI. 
-    
+   
     CGaze UI is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -25,11 +25,18 @@ Created on: August 1, 2018
 --- end license ---
 */
 
+
+
+
 #include "GuiPositionDisplay.h"
 
+/*!
+ * \brief GazePositionDisplay::GazePositionDisplay This dialog shows the current position of eye gaze to the researcher.
+ * \param tracker Eye gaze tracker class
+ */
 GazePositionDisplay::GazePositionDisplay(EyeTracker* tracker)
 {
-    pTracker = tracker;
+    _p_tracker = tracker;
     //this->setWindowState(Qt::WindowFullScreen);
     this->setWindowFlags(Qt::WindowCloseButtonHint | Qt::WindowMinMaxButtonsHint);
     // Setup background colour
@@ -39,10 +46,10 @@ GazePositionDisplay::GazePositionDisplay(EyeTracker* tracker)
     this->setPalette(pal);
     //this->resize(640,480);
 
-    mtimer = new QTimer(this);
+    _timer = new QTimer(this);
 
-    connect(mtimer, SIGNAL(timeout()), this, SLOT(update()));
-    mtimer->start(30);
+    connect(_timer, SIGNAL(timeout()), this, SLOT(update()));
+    _timer->start(30);
 }
 
 GazePositionDisplay::~GazePositionDisplay(void) {
@@ -88,9 +95,9 @@ void GazePositionDisplay::paintEvent(QPaintEvent *event) {
         cv::Point2f pogR;
         cv::Point2f pogL;
         cv::Point2f pogB;
-        bool rightEyeGood = pTracker->getPOG(pogR, rclgaze::RIGHT_EYE);
-        bool leftEyeGood =  pTracker->getPOG(pogL, rclgaze::LEFT_EYE);
-        bool combEyeGood = pTracker->getPOG(pogB, rclgaze::BOTH_EYES);
+        bool rightEyeGood = _p_tracker->getPOG(pogR, rclgaze::RIGHT_EYE);
+        bool leftEyeGood =  _p_tracker->getPOG(pogL, rclgaze::LEFT_EYE);
+        bool combEyeGood = _p_tracker->getPOG(pogB, rclgaze::BOTH_EYES);
 
         float pXR, pYR, pXL, pYL, pXB, pYB, numEyes = 0;
         if (rightEyeGood) {
@@ -134,5 +141,3 @@ void GazePositionDisplay::paintEvent(QPaintEvent *event) {
         qDebug() << pXB << pYB << pogL.x << pogB.x << combEyeGood;
         //p.drawText(QPointF(320,240),QString::number(pXR-pXL));
 }
-
-
