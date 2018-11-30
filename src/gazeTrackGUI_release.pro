@@ -106,23 +106,18 @@ LIBS += -L$$PWD/../lib/ffmpeg/lib avcodec.lib avdevice.lib avfilter.lib avformat
 
 }else:unix {
 INCLUDEPATH += $$PWD/../include/EyeGazeGUI
-INCLUDEPATH += $$PWD/../lib/opencv/include
-INCLUDEPATH += $$PWD/../lib/boost/include
 INCLUDEPATH += $$PWD/../include/UtilLib
 INCLUDEPATH += $$PWD/../include/EyeGazeTrackerLib
-INCLUDEPATH += $$PWD/../include/EyeGazeDetectionLib
-INCLUDEPATH += $$PWD/../include/EyeGazeCalibrationLib
-INCLUDEPATH += $$PWD/../include/EyeGazeCameraLib
 
-LIBS += -L$$PWD/../EyeGazeTrackerLib -lEyeGazeTracker
-LIBS += -L$$PWD/../EyeGazeDetectionLib/ -lEyeGazeTrackerDetection
-LIBS += -L$$PWD/../EyeGazeCalibrationLib/ -lEyeGazeTrackerCalibration
-LIBS += -L$$PWD/../EyeGazeCameraLib/ -lEyeGazeTrackerCamera
+INCLUDEPATH += $$PWD/../lib/opencv/include
+INCLUDEPATH += $$PWD/../lib/boost/include
+INCLUDEPATH += $$PWD/../lib/ffmpeg/include
 
-LIBS += -L$$PWD/../lib/opencv/lib -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_calib3d -lopencv_objdetect -lopencv_imgcodecs -lopencv_videoio -lopencv_gpu
-LIBS += -L$$PWD/../lib/boost/lib -lboost_thread -lboost_system -lboost_timer
+LIBS += -L$$PWD/../lib/EyeGazeLib -lEyeGazeTracker -lEyeGazeTrackerCamera -lEyeGazeTrackerDetection -lEyeGazeTrackerCalibration
+
 LIBS += -L$$PWD/../lib/ffmpeg/lib -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lswresample -lswscale
-
+LIBS += -L$$PWD/../lib/opencv/lib -lopencv_calib3d -lopencv_flann -lopencv_features2d -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_objdetect -lopencv_imgcodecs -lopencv_videoio
+LIBS += -L$$PWD/../lib/boost/lib -lboost_thread -lboost_system -lboost_timer
 }
 
 
