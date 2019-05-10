@@ -103,7 +103,6 @@ void GazeToolbar::initLayout() {
     for (int j = 0 ; j < numScreens ; j++ ) {
 		comboBox_calibMonitor->addItem(QString("Monitor %1").arg(j));
     }
-    comboBox_calibMonitor->addItem(QString("DeckLink"));
     comboBox_calibMonitor->setCurrentIndex(numScreens-1);
 	// Layout management
 	QGridLayout* layout1 = new QGridLayout;

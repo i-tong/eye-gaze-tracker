@@ -63,7 +63,7 @@ void GazePositionDisplay::update() {
 }
 
 void GazePositionDisplay::paintEvent(QPaintEvent *event) {
-
+	(void)event;
 
         /* QPalette pal = this->palette();
         pal.setColor(this->backgroundRole(),QColor(160,160,160,0));
@@ -99,7 +99,13 @@ void GazePositionDisplay::paintEvent(QPaintEvent *event) {
         bool leftEyeGood =  _p_tracker->getPOG(pogL, rclgaze::LEFT_EYE);
         bool combEyeGood = _p_tracker->getPOG(pogB, rclgaze::BOTH_EYES);
 
-        float pXR, pYR, pXL, pYL, pXB, pYB, numEyes = 0;
+		float pXR = 0;
+		float pYR = 0;
+		float pXL = 0;
+		float pYL = 0;
+		float pXB = 0;
+		float pYB = 0;
+		float numEyes = 0;
         if (rightEyeGood) {
             pXR = this->width() * ((float)pogR.x / 100.0);
             pYR = this->height() * ((float)pogR.y / 100.0);
@@ -116,8 +122,8 @@ void GazePositionDisplay::paintEvent(QPaintEvent *event) {
             numEyes += 1;
         }
 
-        float pX = (pXR+pXL)/(numEyes);
-        float pY = (pYR+pYL)/(numEyes);
+//        float pX = (pXR+pXL)/(numEyes);
+//        float pY = (pYR+pYL)/(numEyes);
 
         int SMALL_RADIUS = 10;
         /*p.setBrush(Qt::gray);

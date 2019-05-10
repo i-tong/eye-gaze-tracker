@@ -120,7 +120,7 @@ void GazeDataLogger::logData( cv::RotatedRect& pupilRight, int glintIndexRight, 
 
         QHash<QString, double> hash;
         hash.insert("timestamp",(double)msec);
-        double val = hash.value("timestamp");
+//        double val = hash.value("timestamp");
 
         hash.insert("pupil_x_position_right", pupilRight.center.x);
         hash.insert("pupil_y_position_right", pupilRight.center.y);
@@ -274,7 +274,7 @@ void GazeDataLogger::logData( cv::RotatedRect& pupilRight, int glintIndexRight, 
 
         m_data.push_back(hash);
 
-        qint64 msec2 = QDateTime::currentMSecsSinceEpoch()- m_startTime - msec;
+//        qint64 msec2 = QDateTime::currentMSecsSinceEpoch()- m_startTime - msec;
         //qDebug() << "Logging takes" << msec2 << "ms";
     }
     

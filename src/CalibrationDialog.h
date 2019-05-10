@@ -36,7 +36,6 @@ Created on: August 1, 2018
 #include <QGuiApplication>
 #include <QWindow>
 #include <QScreen>
-
 #include "EyeTracker.h"
 #include "EyeGazeCommon.h"
 #include "UtilGui.h"
@@ -112,7 +111,7 @@ public slots:
 
 signals:
     void CalibrationFinished();
-    void ShowFrame(float x, float y, float size, QColor color);
+    void ShowFrame(float x, float y, float size, QColor color, bool isHead);
 private:
     void _holdTarget(int elapsedms, int holdTime);
     void _moveTarget(int elapsedms);

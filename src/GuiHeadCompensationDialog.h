@@ -52,11 +52,17 @@ class HeadCompensationDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit HeadCompensationDialog(EyeTracker* tracker,QWidget *parent = 0);
+    explicit HeadCompensationDialog(EyeTracker* tracker,
+                                    QWidget *parent = 0);
     ~HeadCompensationDialog();
     void showEvent(QShowEvent *);
-    void setDisplayMonitor(int monitorId);
+    void setDisplayMonitor(int monitorId,
+                           bool externalDisplay = false,
+                           int externalWidth = 640,
+                           int externalHeight = 360);
     void closeEvent(QCloseEvent *event);
+
+    CalibrationHead* _cal_head;
 private slots:
     void onButtonClick_left();
     void onButtonClick_right();
@@ -71,10 +77,15 @@ private:
 
     Ui::HeadCompensationDialog *ui;
     EyeTracker* _tracker;
-    CalibrationHead* _cal_head;
+
     headDirection _curr_dir;
     QTimer* _paint_timer;
     int _monitor_id;
+
+    // For non-PC monitor displays (like decklink output)
+    bool _is_external_display;
+    int _external_width;
+    int _external_height;
 };
 
 #endif // HEADCOMPENSATIONDIALOG_H

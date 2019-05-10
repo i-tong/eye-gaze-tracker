@@ -31,7 +31,7 @@ Created on: August 1, 2018
 
 int main(int argc, char *argv[])
 {
-    qDebug() << "Starting Application";
+    //qDebug() << "Starting Application";
     Q_INIT_RESOURCE(gazetrackguiresources);
 
     QApplication a(argc, argv);

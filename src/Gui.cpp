@@ -35,8 +35,8 @@ GazeTrackGUI::GazeTrackGUI(QWidget *parent)
 {
     this->setWindowIcon(QIcon(":/Icons/Resources/cgaze_icon.png"));
 
-    videoSourceLeftFilename = "C:/Users/Irene/Videos/headtest_gazecenter.avi";//C:/Users/Irene/Videos/eyeVideo_test38.avi";
-    videoSourceRightFilename = "C:/Users/Irene/Videos/headtest_gazecenter.avi";//C:/Users/Irene/Videos/eyeVideo_test38.avi";
+    videoSourceLeftFilename = "C:/Users/Irene/Videos/headtest.avi";//C:/Users/Irene/Videos/eyeVideo_test38.avi";
+    videoSourceRightFilename = "C:/Users/Irene/Videos/headtest.avi";//C:/Users/Irene/Videos/eyeVideo_test38.avi";
 
     tracker = new EyeTracker( QCoreApplication::applicationDirPath().toStdString());
     ui.setupUi(this);
@@ -103,7 +103,6 @@ GazeTrackGUI::GazeTrackGUI(QWidget *parent)
 
     initCalibrationByGUI();
     dialog_head_calibration = new HeadCompensationDialog(tracker);
-
     // Open Gaze API
     _api_server = new OpenGazeAPIServer();
     QString ip = _settings->value("opapi_ip","127.0.0.1").toString();
@@ -111,8 +110,6 @@ GazeTrackGUI::GazeTrackGUI(QWidget *parent)
     _opapiSettingsDialog = new GuiOpenGazeSettingsDialog(ip,port);
     qRegisterMetaType< cv::Point2f >("cv::Point2f");
     qRegisterMetaType< cv::RotatedRect >("cv::RotatedRect");
-
-
 
     connect(this,SIGNAL(returnValue(QString,float)), \
             _api_server,SLOT(OPAPI_ReplyValue(QString,float)));
@@ -299,14 +296,19 @@ void GazeTrackGUI::showCalibrationWindow(bool show){
         // Determine which window to display on
         QString monitorIdFullStr = mainToolbar->comboBox_calibMonitor->currentText();
 
+        if (monitorIdFullStr.compare("DeckLink") != 0 ) {
+            QDesktopWidget* deskWin = QApplication::desktop();
+            int monitorID = mainToolbar->comboBox_calibMonitor->currentIndex();
+            QRect monitorRect = deskWin->screenGeometry(monitorID);
+            dialog_calibration->move(QPoint(monitorRect.x(),monitorRect.y()));
+            dialog_calibration->resize(monitorRect.size());
 
-        QDesktopWidget* deskWin = QApplication::desktop();
-        int monitorID = mainToolbar->comboBox_calibMonitor->currentIndex();
-        QRect monitorRect = deskWin->screenGeometry(monitorID);
-        dialog_calibration->move(QPoint(monitorRect.x(),monitorRect.y()));
-        dialog_calibration->resize(monitorRect.size());
-
-
+        } else {
+            QDesktopWidget* deskWin = QApplication::desktop();
+            QRect monitorRect = deskWin->availableGeometry(0);
+            dialog_calibration->move(QPoint(monitorRect.x(),monitorRect.y()));
+            dialog_calibration->resize(QSize(640,360));
+        }
 
     } else if (show == false) {
         dialog_calibration->hide();
@@ -323,16 +325,16 @@ void GazeTrackGUI::showCalibrationWindow(bool show){
 void GazeTrackGUI::initCalibrationByGUI() {
     // Determine number of calibration points set
     QString numCalib_str = mainToolbar->comboBox_calibNumber->currentText();
-    float move_rate = 0.7;
+    float move_rate = 0.7f;
     int numTargets = 5;
     if (numCalib_str == "5 point") {
         numTargets = 5;
     } else if (numCalib_str == "9 point") {
         numTargets = 9;
-        move_rate = 0.6;
+        move_rate = 0.6f;
     } else if (numCalib_str == "16 point") {
         numTargets = 16;
-        move_rate = 0.4;
+        move_rate = 0.4f;
     }
 
     //dialog_calibration = new CalibrationDialog();
@@ -349,8 +351,7 @@ void GazeTrackGUI::initCalibrationByGUI() {
     }
 
     QString monitorname = mainToolbar->comboBox_calibMonitor->currentText();
-
-    dialog_calibration->initCalibration(numTargets,10,20,0.1,0.02,move_rate,1000,1000,calibEyeSide,*tracker,false, 640,360);
+    dialog_calibration->initCalibration(numTargets,10,20,0.1f,0.02f,move_rate,1000,1000,calibEyeSide,*tracker,0, 640,360);
 
 }
 
@@ -404,7 +405,7 @@ void GazeTrackGUI::buttonClickedLog() {
             QString dateString = date.toString("'gazelog'_dd:MM:yyyy_hh:mm:ss.'txt'");
             dateString.replace(":","-");
             fn.append(dateString);
-
+            qDebug() << fn;
             logfile.open(fn.toStdString(),std::ios::out);
 
             logfile << "timestamp, timetick,framecount,";
@@ -487,8 +488,6 @@ void GazeTrackGUI::buttonClickedManualGlints()
 
             // Get eye image
             cv::Mat right_eye, left_eye = cv::Mat::zeros(480,640,CV_8UC1);
-            bool rightok = tracker->getFrame(right_eye, rclgaze::RIGHT_EYE);
-            bool leftok = tracker->getFrame(left_eye, rclgaze::LEFT_EYE);
 
             cv::Mat cmbImg;
             QImage dis;
@@ -547,16 +546,12 @@ void GazeTrackGUI::buttonClickedManualGlints()
  */
 void GazeTrackGUI::buttonClickedHead()
 {
-
-
     if (tracker->isRunning() && tracker->isCalibrated()) {
 
         QString monitorIdFullStr = mainToolbar->comboBox_calibMonitor->currentText();
-        QDesktopWidget* deskWin = QApplication::desktop();
         int monitorID = mainToolbar->comboBox_calibMonitor->currentIndex();
 
-
-        dialog_head_calibration->setDisplayMonitor(monitorID);
+        dialog_head_calibration->setDisplayMonitor(monitorID, 0, 640,360);
         dialog_head_calibration->show();
 
     } else{
@@ -575,7 +570,6 @@ void GazeTrackGUI::buttonClickedHead()
  */
 void GazeTrackGUI::buttonClickedShowGaze() {
     if (mainToolbar->pushButton_ShowGaze->text() == "Show\nGaze") {
-
         if (tracker->isRunning() && tracker->isCalibrated()) {
             gazedisplay->show();
             mainToolbar->pushButton_ShowGaze->setText("Hide\nGaze");
@@ -586,7 +580,6 @@ void GazeTrackGUI::buttonClickedShowGaze() {
             errorBox.show();
         }
     } else {
-
         gazedisplay->close();
         mainToolbar->pushButton_ShowGaze->setText("Show\nGaze");
     }
@@ -737,7 +730,8 @@ void GazeTrackGUI::comboBoxChanged_calibEye(QString str) {
         calibEyeSide = rclgaze::BOTH_EYES;
     } else if (str == "Right Eye") {
         calibEyeSide = rclgaze::RIGHT_EYE;
-    } else if (str == "Left Eye") {
+    } 
+	else {
         calibEyeSide = rclgaze::LEFT_EYE;
     }
     dialog_calibration->setEyeSide(calibEyeSide);
@@ -747,24 +741,20 @@ void GazeTrackGUI::comboBoxChanged_calibEye(QString str) {
 /*!
  * \brief Slot called when the combobox for number of calibration targets is changed (GuiToolbar::comboBox_calibNumber)
  *
- * This slot updates the number of claibration targets to be calibrated.
+ * This slot updates the number of calibration targets to be calibrated.
  */
 void GazeTrackGUI::comboBoxChanged_calibNumber(QString str) {
 
     QString numCalib_str = str;
-    float move_rate = 0.7;
     int numTargets = 5;
     if (numCalib_str == "5 point") {
         numTargets = 5;
     } else if (numCalib_str == "9 point") {
         numTargets = 9;
-        move_rate = 0.6;
     } else if (numCalib_str == "16 point") {
         numTargets = 16;
-        move_rate = 0.4;
     }
     dialog_calibration->setNumTargets(numTargets);
-
 }
 
 /*!
@@ -785,8 +775,8 @@ void GazeTrackGUI::refreshDisplaySource() {
     cv::Mat origImageRight;
     cv::Mat origImageLeft;
     double avgRate = 0;
-    int test ;
-    switch(display) {
+
+	switch(display) {
     case (TRACKER):
         // Check if tracker is running
         if (!tracker->isRunning()) {
@@ -796,6 +786,7 @@ void GazeTrackGUI::refreshDisplaySource() {
 
         // Right
         // Get image
+        // qDebug() << tracker->getTestResR() << tracker->getTestResL();
         resRight = tracker->getFrame(origImageRight, rclgaze::RIGHT_EYE);
 
         // Overlay pupil and glint centers
@@ -803,17 +794,17 @@ void GazeTrackGUI::refreshDisplaySource() {
         glintFound = tracker->getGlints(gList, rclgaze::RIGHT_EYE);
 
         if (pupilFound) {
-            cv::ellipse(origImageRight,pFound_R,cv::Scalar(0,255,0),2,8);
+            cv::ellipse(origImageRight,pFound_R,cv::Scalar(0,255,0),1,CV_AA);
             cv::circle(origImageRight,pFound_R.center,1.5,cv::Scalar(0,255,0),-1);
         }
         if (glintFound && !std::isnan(gList.at(0).x)) {
-            cv::circle(origImageRight,gList.at(0),3,cv::Scalar(255,255,0),1,8);
+            cv::circle(origImageRight,gList.at(0),3,cv::Scalar(0,255,255),1,CV_AA);
         }
         if (glintFound && !std::isnan(gList.at(1).x)) {
-            cv::circle(origImageRight,gList.at(1),3,cv::Scalar(255,0,0),1,8);
+            cv::circle(origImageRight,gList.at(1),3,cv::Scalar(80,127,255),1,CV_AA);
         }
         if (glintFound && !std::isnan(gList.at(2).x)) {
-            cv::circle(origImageRight,gList.at(2),3,cv::Scalar(255,0,255),1,8);
+            cv::circle(origImageRight,gList.at(2),3,cv::Scalar(255,0,255),1,CV_AA);
         }
 
 
@@ -826,18 +817,18 @@ void GazeTrackGUI::refreshDisplaySource() {
         pupilFound = tracker->getPupil(pFound_L, rclgaze::LEFT_EYE);
         glintFound = tracker->getGlints(gList, rclgaze::LEFT_EYE);
         if (pupilFound){
-            cv::ellipse(origImageLeft,pFound_L,cv::Scalar(0,255,0),2,8);
-            cv::circle(origImageLeft,pFound_L.center,1.5,cv::Scalar(0,255,0),-1);
+            cv::ellipse(origImageLeft,pFound_L,cv::Scalar(0,255,0),1,CV_AA);
+            cv::circle(origImageLeft,pFound_L.center,1,cv::Scalar(0,255,0),-1);
         }
         // plot glints
         if (glintFound && !std::isnan(gList.at(0).x)) {
-            cv::circle(origImageLeft,gList.at(0),3,cv::Scalar(255,255,0),1,8);
+            cv::circle(origImageLeft,gList.at(0),3,cv::Scalar(0,255,255),1,CV_AA);
         }
         if (glintFound && !std::isnan(gList.at(1).x)) {
-            cv::circle(origImageLeft,gList.at(1),3,cv::Scalar(255,0,0),1,8);
+            cv::circle(origImageLeft,gList.at(1),3,cv::Scalar(80,127,255),1,CV_AA);
         }
         if (glintFound && !std::isnan(gList.at(2).x)) {
-            cv::circle(origImageLeft,gList.at(2),3,cv::Scalar(255,0,255),1,8);
+            cv::circle(origImageLeft,gList.at(2),3,cv::Scalar(255,0,255),1,CV_AA);
         }
 
         // Concatenate right/left images
@@ -851,8 +842,8 @@ void GazeTrackGUI::refreshDisplaySource() {
             // First make sure both are filler to the smaller image
             if (origImageLeft.cols != origImageRight.cols ||
                     origImageLeft.rows != origImageRight.rows) {
-                int newWidth = origImageLeft.cols > origImageRight.cols ? origImageLeft.cols : origImageRight.cols;
-                int newHeight = origImageLeft.rows > origImageRight.rows ? origImageLeft.rows : origImageRight.rows;
+//                int newWidth = origImageLeft.cols > origImageRight.cols ? origImageLeft.cols : origImageRight.cols;
+//                int newHeight = origImageLeft.rows > origImageRight.rows ? origImageLeft.rows : origImageRight.rows;
                 cv::Mat largeImage;
                 if (origImageLeft.cols > origImageRight.cols ||
                         origImageLeft.rows > origImageRight.rows ) {
@@ -881,7 +872,7 @@ void GazeTrackGUI::refreshDisplaySource() {
             frameRateList.erase(frameRateList.begin());
         }
 
-        for (int i = 0 ; i < frameRateList.size() ; i++) {
+        for (unsigned i = 0 ; i < frameRateList.size() ; i++) {
             avgRate += frameRateList.at(i);
         }
         avgRate = avgRate / frameRateList.size();
@@ -910,11 +901,11 @@ void GazeTrackGUI::refreshDisplaySource() {
 
             lefterrnet = sqrt(lefterrx*lefterrx + lefterry*lefterry);
             righterrnet = sqrt(righterrx*righterrx + righterry*righterry);
-
+            //qDebug() << err_left[0] << err_left[1];
             QString calres = QString("Calibration Error");
             calres.append(QString("Left: %1 px (%3/%4)").arg(lefterrnet).arg(numValid_left).arg(total));
             calres.append(QString("Right: %1 px (%3/%4)").arg(righterrnet).arg(numValid_right).arg(total));
-
+            //qDebug() << calres;
 
         }
 
@@ -932,6 +923,7 @@ void GazeTrackGUI::refreshDisplaySource() {
  * \param event Close event
  */
 void GazeTrackGUI::closeEvent(QCloseEvent *event) {
+	(void)event;
     if (dialog_calibration->isVisible()) {
         qDebug() << "Close dialog";
         dialog_calibration->close();
@@ -999,7 +991,7 @@ void GazeTrackGUI::getValue(QString ID) {
     } else if (ID.compare("CALIBRATE_RESET") == 0) {
         emit returnValue(ID,dialog_calibration->getNumTargets());
     } else if (ID.compare("CALIBRATE_ADDPOINT") == 0) {
-        int numPts = dialog_calibration->getNumTargets();
+//        int numPts = dialog_calibration->getNumTargets();
         std::vector<cv::Point2f> targetPos;
         dialog_calibration->getCalibrationPoints(targetPos);
         emit streamCalibrationTargetPositions(ID, targetPos);
@@ -1117,13 +1109,13 @@ void GazeTrackGUI::showCalibrationResults() {
     cv::Vec2f righterr = tracker->getCalibrationError(rclgaze::RIGHT_EYE);
     cv::Vec2f lefterr = tracker->getCalibrationError(rclgaze::LEFT_EYE);
 
-    int rightnumvalid = tracker->getCalibrationNumValid(rclgaze::RIGHT_EYE);
-    int leftnumvalid = tracker->getCalibrationNumValid(rclgaze::LEFT_EYE);
+//    int rightnumvalid = tracker->getCalibrationNumValid(rclgaze::RIGHT_EYE);
+//    int leftnumvalid = tracker->getCalibrationNumValid(rclgaze::LEFT_EYE);
 
     QString res = QString("Calibration Error: Left: x: %1%, y: %2%  Right: x: %3%, y: %4% ").arg(lefterr[0],1,'f',1).arg(lefterr[1],1,'f',1).arg(righterr[0],1,'f',1).arg(righterr[1],1,'f',1);
     QString monitorname = mainToolbar->comboBox_calibMonitor->currentText();
 
-    ui.statusLabelCalibration->setText(res);
+	ui.statusLabelCalibration->setText(res);
 }
 
 /*!
@@ -1163,7 +1155,7 @@ void GazeTrackGUI::logCalibration(std::vector<boost::numeric::ublas::matrix<doub
         log << "Sec glint right:" << sec_glint_right << "\n";
 
         log << "left:\n";
-        for (int i = 0 ; i < lefttransmat.size() ; i++ ) {
+        for (unsigned i = 0 ; i < lefttransmat.size() ; i++ ) {
             if ( lefttransmat.at(i).size1()==0 || lefttransmat.at(i).size2() == 0) {
                 continue;
             }
@@ -1183,7 +1175,7 @@ void GazeTrackGUI::logCalibration(std::vector<boost::numeric::ublas::matrix<doub
         }
 
         log << "right:\n";
-        for (int i = 0 ; i < righttransmat.size() ; i++ ) {
+        for (unsigned i = 0 ; i < righttransmat.size() ; i++ ) {
             if ( righttransmat.at(i).size1()==0 || righttransmat.at(i).size2() == 0) {
                 continue;
             }
@@ -1222,6 +1214,8 @@ void GazeTrackGUI::logHEADCalibration(std::vector<std::vector<cv::Vec2f>> pg_pog
                                       std::vector<std::vector<cv::Vec2f>> pupil_pg_mapping_left,\
                                       std::vector<std::vector<cv::Vec2f>> pupil_pg_mapping_right, \
                                       int glintdist) {
+	(void)glintdist;
+    qDebug() << "Logging HEAD Calibration!";
     if (_settings->value("record_calibration").toBool() == true) {
 
         QString dir = _settings->value("logfile_directory",QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
@@ -1236,36 +1230,36 @@ void GazeTrackGUI::logHEADCalibration(std::vector<std::vector<cv::Vec2f>> pg_pog
         log.open(fn.toStdString(),std::ios::out);
 
         log << "PG to POG mapping Left" << std::endl;
-        for (int i = 0 ; i < pg_pog_mapping_left.size() ; i++) {
+        for (unsigned i = 0 ; i < pg_pog_mapping_left.size() ; i++) {
             log << "glint" << i << ":\n";
-            for (int j = 0 ; j < pg_pog_mapping_left.at(i).size() ; j++) {
+            for (unsigned j = 0 ; j < pg_pog_mapping_left.at(i).size() ; j++) {
                 log << pg_pog_mapping_left.at(i).at(j)[0] << "," ;
                 log << pg_pog_mapping_left.at(i).at(j)[1] << ",\n";
             }
         }
 
         log << "PG to POG mapping Right" << std::endl;
-        for (int i = 0 ; i < pg_pog_mapping_right.size() ; i++) {
+        for (unsigned i = 0 ; i < pg_pog_mapping_right.size() ; i++) {
             log << "glint" << i << ":\n";
-            for (int j = 0 ; j < pg_pog_mapping_right.at(i).size() ; j++) {
+            for (unsigned j = 0 ; j < pg_pog_mapping_right.at(i).size() ; j++) {
                 log << pg_pog_mapping_right.at(i).at(j)[0] << "," ;
                 log << pg_pog_mapping_right.at(i).at(j)[1] << ",\n";
             }
         }
 
         log << "Pupil to PG mapping Left" << std::endl;
-        for (int i = 0 ; i < pupil_pg_mapping_left.size() ; i++) {
+        for (unsigned i = 0 ; i < pupil_pg_mapping_left.size() ; i++) {
             log << "glint" << i << ":\n";
-            for (int j = 0 ; j < pupil_pg_mapping_left.at(i).size() ; j++) {
+            for (unsigned j = 0 ; j < pupil_pg_mapping_left.at(i).size() ; j++) {
                 log << pupil_pg_mapping_left.at(i).at(j)[0] << "," ;
                 log << pupil_pg_mapping_left.at(i).at(j)[1] << ",\n";
             }
         }
 
         log << "Pupil to PG mapping Right" << std::endl;
-        for (int i = 0 ; i < pupil_pg_mapping_right.size() ; i++) {
+        for (unsigned i = 0 ; i < pupil_pg_mapping_right.size() ; i++) {
             log << "glint" << i << ":\n";
-            for (int j = 0 ; j < pupil_pg_mapping_right.at(i).size() ; j++) {
+            for (unsigned j = 0 ; j < pupil_pg_mapping_right.at(i).size() ; j++) {
                 log << pupil_pg_mapping_right.at(i).at(j)[0] << "," ;
                 log << pupil_pg_mapping_right.at(i).at(j)[1] << ",\n";
             }

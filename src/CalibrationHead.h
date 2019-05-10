@@ -71,11 +71,14 @@ public:
                          float shrink_rate,
                          float grow_rate,
                          float move_rate,
-                         int time_calibrate);
+                         int time_calibrate,
+                         bool external_display = false,
+                         int external_width = 640,
+                         int external_height = 360);
 
 signals:
     void target_finished();
-
+    void ShowFrameHead(float x, float y, float size, QColor color, bool isHead);
 private:
     int		SMALL_RADIUS; // the smallest radius that the calibration circle shrinks in px
     int		LARGE_RADIUS; // the largest radius that the calibration circle grows
@@ -87,6 +90,9 @@ private:
 
     void paintEvent(QPaintEvent *);
 
+    bool _is_external_display;
+    int _external_width;
+    int _external_height;
 
 
 

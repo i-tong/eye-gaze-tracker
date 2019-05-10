@@ -123,7 +123,7 @@ void CalibrationDialog::initCalibration(int numberOfTargets,int small_radius, in
         _external_width = externalWidth;
 
         // Shrink the calibration x field of view
-        for (int i = 0 ; i < _target_positions.size() ; i++) {
+        for (unsigned i = 0 ; i < _target_positions.size() ; i++) {
             float x = _target_positions.at(i).x();
             if (x <= 20) {
                 x = 30;
@@ -142,7 +142,7 @@ void CalibrationDialog::initCalibration(int numberOfTargets,int small_radius, in
  * the start time of holding (holdTimerStart)
  */
 void CalibrationDialog::startCalibration() {
-    _p_tracker->initCalibration(_target_positions.size(), _side_to_calibrate);
+    _p_tracker->initCalibration((int)_target_positions.size(), _side_to_calibrate);
 
     _curr_target = 0;
     state = START;
@@ -230,7 +230,7 @@ void CalibrationDialog::_holdTarget(int elapsedms, int holdTime) {
 void CalibrationDialog::_moveTarget(int elapsedms) {
 
     QPointF desPos = _target_positions.at(_curr_target);
-    int ms = _elapsed_timer.elapsed();
+//    int ms = _elapsed_timer.elapsed();
     desPos.setX(this->width() * ( (float)desPos.x() / 100.0 ));
     desPos.setY(this->height() * ( (float)desPos.y() / 100.0 ));
 
@@ -293,6 +293,7 @@ void CalibrationDialog::_growTarget(int elapsedms) {
  * \param elapsedms elapsed time
  */
 void CalibrationDialog::_shrinkTarget(int elapsedms) {
+	(void)elapsedms;
     // Change state
     _elapsed_timer.restart();
     state = CALIBRATE;
@@ -351,10 +352,6 @@ void CalibrationDialog::paintEvent(QPaintEvent *) {
         p.drawEllipse(_curr_position,(int)(_small_radius*0.5),(int)(_small_radius*0.5));
     }
     else { // Draw eye gaze position
-        bool rok = _p_tracker->getPOG(rightPOG,rclgaze::RIGHT_EYE);
-        bool lok = _p_tracker->getPOG(leftPOG, rclgaze::LEFT_EYE);
-        bool bok = _p_tracker->getPOG(bestPOG, rclgaze::BOTH_EYES);
-
         this->setWindowOpacity(0.5);
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
@@ -421,8 +418,7 @@ void CalibrationDialog::paintEvent(QPaintEvent *) {
         } else if (_curr_color == Qt::green) {
             col = Qt::green;
         }
-        emit ShowFrame(xratio,yratio, rad, col);
-
+        emit ShowFrame(xratio,yratio, rad, col, false);
     }
 
 }

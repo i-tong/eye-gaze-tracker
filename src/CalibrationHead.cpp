@@ -77,8 +77,19 @@ void CalibrationHead::initCalibration(int small_radius,
                                       float shrink_rate,
                                       float grow_rate,
                                       float move_rate,
-                                      int time_calibrate)
+                                      int time_calibrate,
+                                      bool external_display,
+                                      int external_width,
+                                      int external_height)
 {
+    _is_external_display = external_display;
+    _external_height = external_height;
+    _external_width = external_width;
+
+    if (_is_external_display) {
+        this->resize(QSize(640,320));
+    }
+
     // Set calibration parameters
     SMALL_RADIUS = small_radius;
     LARGE_RADIUS = large_radius;
@@ -98,6 +109,8 @@ void CalibrationHead::initCalibration(int small_radius,
     _currPosition = desPos;
     _tracker->initReCalibration();
     _paintTimer->start(30);
+
+
 }
 
 
@@ -164,7 +177,6 @@ void CalibrationHead::calibration()
  * \param default function call from Qt
  */
 void CalibrationHead::paintEvent(QPaintEvent *) {
-
     if (_currState == CALIBRATE) {
         this->calibration();
         QPainter p(this);
@@ -224,6 +236,21 @@ void CalibrationHead::paintEvent(QPaintEvent *) {
         p.drawEllipse(pos,20,20);
 
     }
+    if (_is_external_display) {
+        float xratio = _currPosition.x() / this->width();
+        float yratio = _currPosition.y() / this->height();
+        float rad = _currRadius;
+
+        QColor col;
+        if (_currColor == Qt::red) {
+            col = Qt::red;
+        } else if (_currColor == Qt::green) {
+            col = Qt::green;
+        }
+        emit ShowFrameHead(xratio,yratio, rad, col, true);
+
+    }
+
 
 }
 

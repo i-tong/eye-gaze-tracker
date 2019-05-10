@@ -33,8 +33,8 @@ Created on: August 1, 2018
  * \param tracker Eye gaze tracker
  * \param parent Parent Qt class
  */
-HeadCompensationDialog::HeadCompensationDialog(EyeTracker* tracker, QWidget *parent) :
-    QDialog(parent),
+HeadCompensationDialog::HeadCompensationDialog(EyeTracker* tracker,
+                                                QWidget *parent) :  QDialog(parent),
     ui(new Ui::HeadCompensationDialog)
 {
     this->setWindowIcon(QIcon(":/Icons/Resources/cgaze_icon.png"));
@@ -72,14 +72,21 @@ HeadCompensationDialog::~HeadCompensationDialog()
 }
 
 void HeadCompensationDialog::closeEvent(QCloseEvent *event) {
+	(void)event;
     _cal_head->finishCalibration();
     _cal_head->close();
 }
 
-void HeadCompensationDialog::setDisplayMonitor(int monitorId) {
+void HeadCompensationDialog::setDisplayMonitor(int monitorId, bool externalDisplay,
+                                               int externalWidth,
+                                               int externalHeight ) {
     // Sets the monitor to display the calibration sequence on
     _monitor_id = monitorId;
     _cal_head->setMonitor(_monitor_id);
+
+    _is_external_display = externalDisplay;
+        _external_height = externalHeight;
+        _external_width = externalWidth;
 }
 
 void HeadCompensationDialog::showEvent(QShowEvent *) {
@@ -89,7 +96,7 @@ void HeadCompensationDialog::showEvent(QShowEvent *) {
     ui->pushButton_left->setFocus();
     this->onButtonClick_left();
     _cal_head->setMonitor(_monitor_id);
-    _cal_head->initCalibration(10,20,0.1,0.1,0.9,800);
+    _cal_head->initCalibration(10,20,0.1f,0.1f,0.9f,800,_is_external_display,_external_width,_external_height);
 
     _paint_timer->start(30);
 
@@ -178,6 +185,8 @@ void HeadCompensationDialog::finished() {
     case HEAD_DOWN:
         ui->label_downstatus->setText("Down: Finished");
         break;
+	case HEAD_NONE:
+		break;
     }
 
 
@@ -186,6 +195,7 @@ void HeadCompensationDialog::finished() {
 }
 
 void HeadCompensationDialog::paintEvent(QPaintEvent *event) {
+	(void)event;
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
     int dispx, dispy, dispw, disph;
@@ -231,6 +241,8 @@ void HeadCompensationDialog::paintEvent(QPaintEvent *event) {
         case 4: // down
             pos.setY(pos.y() - int(disph/4));
             break;
+		case HEAD_NONE:
+			break;
         }
         pos.setX(pos.x()+dispx);
         pos.setY(pos.y()+dispy);

@@ -68,13 +68,13 @@ OpenGazeAPIServer::OpenGazeAPIServer()
 }
 
 OpenGazeAPIServer::~OpenGazeAPIServer() {
-    for (int i = 0 ; i < _socketVec.size(); i++) {
+    for (unsigned i = 0 ; i < _socketVec.size(); i++) {
         _socketVec.at(i)->disconnect();
     }
 }
 
 void OpenGazeAPIServer::OPAPI_SendRecord(rclgaze::OpenAPIDataRecord rec) {
- //   qDebug() << "OPAPI_SendRecord";
+   // qDebug() << "OPAPI_SendRecord";
     this->sendRecord(rec);
 }
 
@@ -108,7 +108,7 @@ void OpenGazeAPIServer::streamData(rclgaze::OpenAPIDataRecord rec) {
 }
 
 void OpenGazeAPIServer::sendRecord(rclgaze::OpenAPIDataRecord record) {
-   // qDebug() << "endRecord";
+    qDebug() << "sendRecord";
     QString recstr = "<REC ";
     if (state_flag.at(OpenGazeAPI::EnableSendData) != true) {
          _count = 0;
@@ -187,8 +187,8 @@ void OpenGazeAPIServer::OPAPI_SendCalResult(int numPts, \
     QString calstr = "<CAL ID=\"CALIB_RESULT\" ";
     // Sanity check
 
-    if (targetPos.size() != numPts || leftGaze.size() != numPts \
-            || rightGaze.size() != numPts || leftValid.size() != numPts || rightValid.size() != numPts) {
+    if ((int)targetPos.size() != numPts || (int)leftGaze.size() != numPts \
+            || (int)rightGaze.size() != numPts || (int)leftValid.size() != numPts || (int)rightValid.size() != numPts) {
         return;
     }
 
@@ -427,7 +427,7 @@ void OpenGazeAPIServer::handleCalibrationRequest(QXmlStreamAttributes att , Open
 }
 
 void OpenGazeAPIServer::respondStartCalibration(bool start) {
-
+	(void)start;
 }
 
 // Public functions
